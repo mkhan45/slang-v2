@@ -1,11 +1,18 @@
 use std::error::Error;
-use std::io::{self, Read};
+// use std::io::{self, Read};
+use std::io;
 
 mod token;
 use crate::token::*;
 
 fn run(code: &String) -> Result<(), Box<dyn Error>> {
-    Ok(())
+    let tokens = scan_tokens(code);
+    if let Some(t) = tokens.iter().find(|t| t.ty == TokenType::Unknown) {
+        Err(format!("Invalid {} on line {}", t.lexeme, t.line).into())
+    } else {
+        tokens.iter().for_each(|t| println!("{:?}", t.ty));
+        Ok(())
+    }
 }
 
 fn run_file(path: impl AsRef<std::path::Path> + std::fmt::Debug + std::clone::Clone) -> Result<(), Box<dyn Error>> {
@@ -15,12 +22,13 @@ fn run_file(path: impl AsRef<std::path::Path> + std::fmt::Debug + std::clone::Cl
 }
 
 fn run_prompt() -> Result<(), Box<dyn Error>> {
-    let mut stdin = io::stdin();
+    let stdin = io::stdin();
     let mut buffer = String::new();
 
     loop {
         print!(">> ");
-        stdin.read_to_string(&mut buffer)?;
+        buffer.clear();
+        stdin.read_line(&mut buffer)?;
 
         if buffer == "exit".to_string() {
             break;
@@ -32,40 +40,35 @@ fn run_prompt() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-struct Scanner {
-    source: String,
-    tokens: Vec<Token>,
-}
+fn scan_tokens(source: &String) -> Vec<Token> {
+    let mut char_iter = source.chars().peekable();
+    let mut line = 1;
 
-impl Scanner {
-    fn scan_tokens(mut self) {
-        let mut char_iter = self.source.chars().peekable();
-
-        let mut next_token = || {
-            let c = char_iter.next();
-            let peek = char_iter.peek();
-            match (c, peek) {
-                (Some('('), _) => Token::from_ty(TokenType::LParen),
-                (Some(')'), _) => Token::from_ty(TokenType::RParen),
-                (Some('{'), _) => Token::from_ty(TokenType::LBrace),
-                (Some('}'), _) => Token::from_ty(TokenType::RBrace),
-                (Some(','), _) => Token::from_ty(TokenType::Comma),
-                (Some('+'), _) => Token::from_ty(TokenType::Plus),
-                (Some('-'), _) => Token::from_ty(TokenType::Minus),
-                (Some('*'), _) => Token::from_ty(TokenType::Star),
-                _ => Token::from_ty(TokenType::EOF),
-            }
-        };
-
-        loop {
-            let token = next_token();
-            if token.ty == TokenType::EOF {
-                break;
-            } else {
-                self.tokens.push(token);
-            }
+    let next_token = || {
+        let c = char_iter.next();
+        let peek = char_iter.peek();
+        match (c, peek) {
+            (Some(' '), _) => Some(Token::from_ty(TokenType::Space)),
+            (Some('('), _) => Some(Token::from_ty(TokenType::LParen)),
+            (Some(')'), _) => Some(Token::from_ty(TokenType::RParen)),
+            (Some('{'), _) => Some(Token::from_ty(TokenType::LBrace)),
+            (Some('}'), _) => Some(Token::from_ty(TokenType::RBrace)),
+            (Some(','), _) => Some(Token::from_ty(TokenType::Comma)),
+            (Some('+'), _) => Some(Token::from_ty(TokenType::Plus)),
+            (Some('-'), _) => Some(Token::from_ty(TokenType::Minus)),
+            (Some('*'), _) => Some(Token::from_ty(TokenType::Star)),
+            (Some('\n'), _) => {
+                line += 1;
+                Some(Token::from_ty(TokenType::NewLine))
+            },
+            (Some(_c), Some(_n)) => Some(Token::new(TokenType::Unknown, "".to_string(), Box::new("".to_string()), line)),
+            (_, _) => None,
         }
-    }
+    };
+
+    let token_iter = std::iter::from_fn(next_token);
+
+    token_iter.collect::<Vec<Token>>()
 }
 
 fn main() -> Result<(), Box<dyn Error>> {

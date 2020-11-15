@@ -1,6 +1,8 @@
 #[allow(dead_code)]
 #[derive(Debug, Eq, PartialEq)]
 pub enum TokenType {
+    Space,
+    NewLine,
     LParen,
     RParen,
     LBrace,
@@ -33,6 +35,7 @@ pub enum TokenType {
     While,
     Print,
     EOF,
+    Unknown,
 }
 
 pub trait Literal: std::fmt::Display { }
