@@ -12,7 +12,6 @@ fn run(code: &String) -> Result<(), Box<dyn Error>> {
     if let Some(t) = tokens.iter().find(|t| t.ty == TokenType::Unknown) {
         Err(format!("Invalid {} on line {}", t.lexeme, t.line).into())
     } else {
-        println!("");
         tokens.iter().for_each(|t| println!("{:?}", t.ty));
         Ok(())
     }
@@ -29,7 +28,7 @@ fn run_prompt() -> Result<(), Box<dyn Error>> {
     let mut buffer = String::new();
 
     loop {
-        print!(">> ");
+        println!(">> ");
         buffer.clear();
         stdin.read_line(&mut buffer)?;
 
@@ -41,6 +40,16 @@ fn run_prompt() -> Result<(), Box<dyn Error>> {
     }
 
     Ok(())
+}
+
+fn scan_string(source: &mut std::iter::Peekable<impl Iterator<Item=char>>, line: usize) -> Token {
+    let res = source.take_while(|&c| c != '\"').collect::<String>();
+    if source.next().is_some() {
+        let token = Token::new(TokenType::Str, res.clone(), Box::new(res), line);
+        token
+    } else {
+        Token::new(TokenType::Unknown, res, Box::new("".to_string()), line)
+    }
 }
 
 fn scan_tokens(source: &String) -> Vec<Token> {
@@ -85,6 +94,7 @@ fn scan_tokens(source: &String) -> Vec<Token> {
                 Some(Token::from_ty(TokenType::Equal))
             },
             (Some('='), _) => Some(Token::from_ty(TokenType::Assign)),
+            (Some('\"'), _) => Some(scan_string(&mut char_iter, line)),
             (Some(_c), Some(_n)) => Some(Token::new(TokenType::Unknown, "".to_string(), Box::new("".to_string()), line)),
             (_, _) => None,
         }

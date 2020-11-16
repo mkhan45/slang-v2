@@ -1,6 +1,7 @@
 #[allow(dead_code)]
 #[derive(Debug, Eq, PartialEq)]
 pub enum TokenType {
+    Str,
     WhiteSpace,
     NewLine,
     LParen,
@@ -22,7 +23,6 @@ pub enum TokenType {
     Less,
     LessEqual,
     Identifier,
-    Str,
     Number,
     And,
     Or,
