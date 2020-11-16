@@ -43,6 +43,7 @@ pub enum TokenType {
 
 pub trait Literal: std::fmt::Display { }
 impl Literal for String {}
+impl Literal for f32 {}
 
 pub struct Token {
     pub ty: TokenType,

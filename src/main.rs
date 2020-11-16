@@ -52,6 +52,15 @@ fn scan_string(source: &mut std::iter::Peekable<impl Iterator<Item=char>>, line:
     }
 }
 
+fn scan_number(source: &mut std::iter::Peekable<impl Iterator<Item=char>>, line: usize) -> Token {
+    let res = source.take_while(|&c| c.is_numeric() || c == '.').collect::<String>();
+    if let Ok(n) = res.clone().parse::<f32>() {
+        Token::new(TokenType::Number, res.clone(), Box::new(n), line)
+    } else {
+        Token::new(TokenType::Unknown, res.clone(), Box::new(res), line)
+    }
+}
+
 fn scan_tokens(source: &String) -> Vec<Token> {
     let mut char_iter = source.chars().peekable();
     let mut line = 1;
@@ -95,7 +104,13 @@ fn scan_tokens(source: &String) -> Vec<Token> {
             },
             (Some('='), _) => Some(Token::from_ty(TokenType::Assign)),
             (Some('\"'), _) => Some(scan_string(&mut char_iter, line)),
-            (Some(_c), Some(_n)) => Some(Token::new(TokenType::Unknown, "".to_string(), Box::new("".to_string()), line)),
+            (Some(c), _n_opt) => {
+                if c.is_numeric() {
+                    Some(scan_number(&mut char_iter, line))
+                } else {
+                    Some(Token::new(TokenType::Unknown, c.to_string(), Box::new(c.to_string()), line))
+                }
+            }
             (_, _) => None,
         }
     };
