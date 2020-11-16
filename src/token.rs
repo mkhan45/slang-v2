@@ -1,7 +1,7 @@
 #[allow(dead_code)]
 #[derive(Debug, Eq, PartialEq)]
 pub enum TokenType {
-    Space,
+    WhiteSpace,
     NewLine,
     LParen,
     RParen,
@@ -15,6 +15,8 @@ pub enum TokenType {
     Star,
     Bang,
     BangEqual,
+    Equal,
+    Assign,
     Greater,
     GreaterEqual,
     Less,
@@ -35,6 +37,7 @@ pub enum TokenType {
     While,
     Print,
     EOF,
+    Hash,
     Unknown,
 }
 

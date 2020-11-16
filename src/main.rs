@@ -1,3 +1,5 @@
+#![feature(or_patterns)]
+
 use std::error::Error;
 // use std::io::{self, Read};
 use std::io;
@@ -10,6 +12,7 @@ fn run(code: &String) -> Result<(), Box<dyn Error>> {
     if let Some(t) = tokens.iter().find(|t| t.ty == TokenType::Unknown) {
         Err(format!("Invalid {} on line {}", t.lexeme, t.line).into())
     } else {
+        println!("");
         tokens.iter().for_each(|t| println!("{:?}", t.ty));
         Ok(())
     }
@@ -48,7 +51,7 @@ fn scan_tokens(source: &String) -> Vec<Token> {
         let c = char_iter.next();
         let peek = char_iter.peek();
         match (c, peek) {
-            (Some(' '), _) => Some(Token::from_ty(TokenType::Space)),
+            (Some(' '|'\t'), _) => Some(Token::from_ty(TokenType::WhiteSpace)),
             (Some('('), _) => Some(Token::from_ty(TokenType::LParen)),
             (Some(')'), _) => Some(Token::from_ty(TokenType::RParen)),
             (Some('{'), _) => Some(Token::from_ty(TokenType::LBrace)),
@@ -57,10 +60,31 @@ fn scan_tokens(source: &String) -> Vec<Token> {
             (Some('+'), _) => Some(Token::from_ty(TokenType::Plus)),
             (Some('-'), _) => Some(Token::from_ty(TokenType::Minus)),
             (Some('*'), _) => Some(Token::from_ty(TokenType::Star)),
-            (Some('\n'), _) => {
+            (Some('#'), _) => Some(Token::from_ty(TokenType::Hash)),
+            (Some('\n'|'\r'), _) => {
                 line += 1;
-                Some(Token::from_ty(TokenType::NewLine))
+                Some(Token::from_ty(TokenType::WhiteSpace))
             },
+            (Some('!'), Some('=')) => {
+                char_iter.next();
+                Some(Token::from_ty(TokenType::BangEqual))
+            },
+            (Some('!'), _) => Some(Token::from_ty(TokenType::Bang)),
+            (Some('<'), Some('=')) => {
+                char_iter.next();
+                Some(Token::from_ty(TokenType::LessEqual))
+            },
+            (Some('<'), _) => Some(Token::from_ty(TokenType::Less)),
+            (Some('>'), Some('=')) => {
+                char_iter.next();
+                Some(Token::from_ty(TokenType::GreaterEqual))
+            },
+            (Some('>'), _) => Some(Token::from_ty(TokenType::Greater)),
+            (Some('='), Some('=')) => {
+                char_iter.next();
+                Some(Token::from_ty(TokenType::Equal))
+            },
+            (Some('='), _) => Some(Token::from_ty(TokenType::Assign)),
             (Some(_c), Some(_n)) => Some(Token::new(TokenType::Unknown, "".to_string(), Box::new("".to_string()), line)),
             (_, _) => None,
         }
@@ -68,7 +92,7 @@ fn scan_tokens(source: &String) -> Vec<Token> {
 
     let token_iter = std::iter::from_fn(next_token);
 
-    token_iter.collect::<Vec<Token>>()
+    token_iter.filter(|t| ![TokenType::WhiteSpace].contains(&t.ty)).collect::<Vec<Token>>()
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
