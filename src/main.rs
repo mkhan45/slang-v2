@@ -1,4 +1,5 @@
 #![feature(or_patterns)]
+#![feature(type_alias_impl_trait)]
 
 use std::error::Error;
 // use std::io::{self, Read};
@@ -42,7 +43,9 @@ fn run_prompt() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn scan_string(source: &mut std::iter::Peekable<impl Iterator<Item=char>>, line: usize) -> Token {
+type Scanner<'a> = std::iter::Peekable<std::str::Chars<'a>>;
+
+fn scan_string(source: &mut Scanner, line: usize) -> Token {
     let res = source.take_while(|&c| c != '\"').collect::<String>();
     if source.next().is_some() {
         let token = Token::new(TokenType::Str, res.clone(), Box::new(res), line);
@@ -52,12 +55,20 @@ fn scan_string(source: &mut std::iter::Peekable<impl Iterator<Item=char>>, line:
     }
 }
 
-fn scan_number(source: &mut std::iter::Peekable<impl Iterator<Item=char>>, line: usize) -> Token {
+fn scan_number(source: &mut Scanner, line: usize) -> Token {
     let res = source.take_while(|&c| c.is_numeric() || c == '.').collect::<String>();
     if let Ok(n) = res.clone().parse::<f32>() {
         Token::new(TokenType::Number, res.clone(), Box::new(n), line)
     } else {
         Token::new(TokenType::Unknown, res.clone(), Box::new(res), line)
+    }
+}
+
+fn skip_comment(source: &mut Scanner) {
+    while let Some(c) = source.next() {
+        if c == '\n' {
+            break;
+        }
     }
 }
 
@@ -78,7 +89,10 @@ fn scan_tokens(source: &String) -> Vec<Token> {
             (Some('+'), _) => Some(Token::from_ty(TokenType::Plus)),
             (Some('-'), _) => Some(Token::from_ty(TokenType::Minus)),
             (Some('*'), _) => Some(Token::from_ty(TokenType::Star)),
-            (Some('#'), _) => Some(Token::from_ty(TokenType::Hash)),
+            (Some('#'), _) => {
+                skip_comment(&mut char_iter);
+                Some(Token::from_ty(TokenType::Hash))
+            },
             (Some('\n'|'\r'), _) => {
                 line += 1;
                 Some(Token::from_ty(TokenType::WhiteSpace))
@@ -117,7 +131,7 @@ fn scan_tokens(source: &String) -> Vec<Token> {
 
     let token_iter = std::iter::from_fn(next_token);
 
-    token_iter.filter(|t| ![TokenType::WhiteSpace].contains(&t.ty)).collect::<Vec<Token>>()
+    token_iter.filter(|t| ![TokenType::WhiteSpace, TokenType::Hash].contains(&t.ty)).collect::<Vec<Token>>()
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
