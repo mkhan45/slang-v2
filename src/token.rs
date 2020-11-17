@@ -11,7 +11,9 @@ pub enum TokenType {
     Comma,
     Dot,
     Plus,
+    PlusAssign,
     Minus,
+    MinusAssign,
     Slash,
     Star,
     Bang,
@@ -41,7 +43,7 @@ pub enum TokenType {
     Unknown,
 }
 
-pub trait Literal: std::fmt::Display { }
+pub trait Literal: std::fmt::Display {}
 impl Literal for String {}
 impl Literal for f32 {}
 
