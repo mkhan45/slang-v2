@@ -10,8 +10,7 @@ fn scan_string(source: &mut Scanner, line: usize) -> Token {
         .peeking_take_while(|&c| c != '\"')
         .collect::<String>();
     if source.next().is_some() {
-        let token = Token::new(TokenType::Str, res.clone(), Box::new(res), line);
-        token
+        Token::new(TokenType::Str, res.clone(), Box::new(res), line)
     } else {
         Token::new(TokenType::Unknown, res, Box::new("".to_string()), line)
     }
@@ -59,14 +58,10 @@ fn scan_identifier(first: char, source: &mut Scanner, line: usize) -> Token {
 }
 
 fn skip_comment(source: &mut Scanner) {
-    while let Some(c) = source.next() {
-        if c == '\n' {
-            break;
-        }
-    }
+    source.peeking_take_while(|&c| c != '\n').for_each(drop);
 }
 
-pub fn scan_tokens(source: &String) -> Vec<Token> {
+pub fn scan_tokens(source: &str) -> Vec<Token> {
     let mut char_iter = (source).chars().peekable();
     let mut line = 1;
 

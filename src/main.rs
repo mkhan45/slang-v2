@@ -8,7 +8,7 @@ mod scanner;
 use scanner::token::*;
 use scanner::*;
 
-fn run(code: &String) -> Result<(), Box<dyn Error>> {
+fn run(code: &str) -> Result<(), Box<dyn Error>> {
     let tokens = scan_tokens(code);
     if let Some(t) = tokens.iter().find(|t| t.ty == TokenType::Unknown) {
         Err(format!("Invalid {} on line {}", t.lexeme, t.line).into())
@@ -35,11 +35,11 @@ fn run_prompt() -> Result<(), Box<dyn Error>> {
         buffer.clear();
         stdin.read_line(&mut buffer)?;
 
-        if buffer == "exit".to_string() {
+        if buffer == *"exit".to_string() {
             break;
         }
 
-        run(&mut buffer)?;
+        run(&buffer)?;
     }
 
     Ok(())
@@ -48,12 +48,12 @@ fn run_prompt() -> Result<(), Box<dyn Error>> {
 fn main() -> Result<(), Box<dyn Error>> {
     let args = std::env::args().collect::<Vec<String>>();
 
-    if args.len() > 2 {
-        println!("Usage: rlox [script]");
-        Ok(())
-    } else if args.len() == 2 {
-        run_file(args[1].clone())
-    } else {
-        run_prompt()
+    match args.len() {
+        0 | 1 => run_prompt(),
+        2 => run_file(args[1].clone()),
+        _ => {
+            println!("Usage: rlox [script]");
+            Ok(())
+        }
     }
 }
