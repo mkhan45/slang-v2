@@ -5,15 +5,15 @@ use std::error::Error;
 use std::io;
 
 mod scanner;
-use scanner::*;
 use scanner::token::*;
+use scanner::*;
 
 fn run(code: &String) -> Result<(), Box<dyn Error>> {
     let tokens = scan_tokens(code);
     if let Some(t) = tokens.iter().find(|t| t.ty == TokenType::Unknown) {
         Err(format!("Invalid {} on line {}", t.lexeme, t.line).into())
     } else {
-        tokens.iter().for_each(|t| println!("{:?}", t.ty));
+        tokens.iter().for_each(|t| println!("{}", t));
         Ok(())
     }
 }
@@ -39,12 +39,11 @@ fn run_prompt() -> Result<(), Box<dyn Error>> {
             break;
         }
 
-        run(&buffer)?;
+        run(&mut buffer)?;
     }
 
     Ok(())
 }
-
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = std::env::args().collect::<Vec<String>>();

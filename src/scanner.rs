@@ -1,10 +1,14 @@
 pub mod token;
 use token::*;
 
+use itertools::Itertools;
+
 type Scanner<'a> = std::iter::Peekable<std::str::Chars<'a>>;
 
 fn scan_string(source: &mut Scanner, line: usize) -> Token {
-    let res = source.take_while(|&c| c != '\"').collect::<String>();
+    let res = source
+        .peeking_take_while(|&c| c != '\"')
+        .collect::<String>();
     if source.next().is_some() {
         let token = Token::new(TokenType::Str, res.clone(), Box::new(res), line);
         token
@@ -13,13 +17,15 @@ fn scan_string(source: &mut Scanner, line: usize) -> Token {
     }
 }
 
+// TODO fix parens
 fn scan_number(first: char, source: &mut Scanner, line: usize) -> Token {
     let lexeme = std::iter::once(first)
-        .chain(source.take_while(|&c| !c.is_whitespace()))
+        .chain(source.peeking_take_while(|&c| c.is_numeric() || c == '.'))
         .collect::<String>();
-    if let Ok(n) = lexeme.clone().parse::<f32>() {
+
+    if let Ok(n) = lexeme.parse::<f32>() {
         Token::new(TokenType::Number, lexeme.clone(), Box::new(n), line)
-    } else if let Ok(n) = lexeme.clone().parse::<isize>() {
+    } else if let Ok(n) = lexeme.parse::<isize>() {
         Token::new(TokenType::Number, lexeme.clone(), Box::new(n as f32), line)
     } else {
         Token::new(TokenType::Unknown, lexeme.clone(), Box::new(lexeme), line)
@@ -61,17 +67,17 @@ fn skip_comment(source: &mut Scanner) {
 }
 
 pub fn scan_tokens(source: &String) -> Vec<Token> {
-    let mut char_iter = source.chars().peekable();
+    let mut char_iter = (source).chars().peekable();
     let mut line = 1;
 
     let next_token = || {
         let c = char_iter.next();
         let peek = char_iter.peek();
         match (c, peek) {
-            (Some('\n'|'\r'), _) => {
+            (Some('\n' | '\r'), _) => {
                 line += 1;
                 Some(Token::from_ty(TokenType::NewLine))
-            },
+            }
             (Some('('), _) => Some(Token::from_ty(TokenType::LParen)),
             (Some(')'), _) => Some(Token::from_ty(TokenType::RParen)),
             (Some('{'), _) => Some(Token::from_ty(TokenType::LBrace)),
@@ -122,7 +128,7 @@ pub fn scan_tokens(source: &String) -> Vec<Token> {
                     Some(scan_identifier(c, &mut char_iter, line))
                 } else if c.is_whitespace() {
                     Some(Token::from_ty(TokenType::WhiteSpace))
-                }else {
+                } else {
                     Some(Token::new(
                         TokenType::Unknown,
                         c.to_string(),
