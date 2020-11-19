@@ -8,12 +8,16 @@ mod scanner;
 use scanner::token::*;
 use scanner::*;
 
+mod parser;
+use parser::*;
+
 fn run(code: &str) -> Result<(), Box<dyn Error>> {
     let tokens = scan_tokens(code);
     if let Some(t) = tokens.iter().find(|t| t.ty == TokenType::Unknown) {
         Err(format!("Invalid {} on line {}", t.lexeme, t.line).into())
     } else {
         tokens.iter().for_each(|t| println!("{}", t));
+        // println!("{}", expr(&mut tokens.iter()));
         Ok(())
     }
 }

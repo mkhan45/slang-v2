@@ -43,19 +43,21 @@ pub enum TokenType {
     Unknown,
 }
 
-pub trait Literal: std::fmt::Display {}
-impl Literal for String {}
-impl Literal for f32 {}
+#[derive(Debug)]
+pub enum Atom {
+    Str(String),
+    Num(f32),
+}
 
 pub struct Token {
     pub ty: TokenType,
     pub lexeme: String,
-    pub literal: Box<dyn Literal>,
+    pub literal: Option<Atom>,
     pub line: usize,
 }
 
 impl Token {
-    pub fn new(ty: TokenType, lexeme: String, literal: Box<dyn Literal>, line: usize) -> Self {
+    pub fn new(ty: TokenType, lexeme: String, literal: Option<Atom>, line: usize) -> Self {
         Token {
             ty,
             lexeme,
@@ -68,7 +70,7 @@ impl Token {
         Token {
             ty,
             lexeme: "".to_string(),
-            literal: Box::new("".to_string()),
+            literal: None,
             line: 0,
         }
     }
@@ -76,6 +78,6 @@ impl Token {
 
 impl std::fmt::Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} {} {}", self.ty, self.lexeme, self.literal)
+        write!(f, "{:?} {} {:?}", self.ty, self.lexeme, self.literal)
     }
 }

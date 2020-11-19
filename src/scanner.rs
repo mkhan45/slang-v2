@@ -1,4 +1,5 @@
 pub mod token;
+use crate::token::Atom;
 use token::*;
 
 use itertools::Itertools;
@@ -10,9 +11,9 @@ fn scan_string(source: &mut Scanner, line: usize) -> Token {
         .peeking_take_while(|&c| c != '\"')
         .collect::<String>();
     if source.next().is_some() {
-        Token::new(TokenType::Str, res.clone(), Box::new(res), line)
+        Token::new(TokenType::Str, res.clone(), Some(Atom::Str(res)), line)
     } else {
-        Token::new(TokenType::Unknown, res, Box::new("".to_string()), line)
+        Token::new(TokenType::Unknown, res, None, line)
     }
 }
 
@@ -23,11 +24,11 @@ fn scan_number(first: char, source: &mut Scanner, line: usize) -> Token {
         .collect::<String>();
 
     if let Ok(n) = lexeme.parse::<f32>() {
-        Token::new(TokenType::Number, lexeme.clone(), Box::new(n), line)
+        Token::new(TokenType::Number, lexeme.clone(), Some(Atom::Num(n)), line)
     } else if let Ok(n) = lexeme.parse::<isize>() {
-        Token::new(TokenType::Number, lexeme.clone(), Box::new(n as f32), line)
+        Token::new(TokenType::Number, lexeme.clone(), Some(Atom::Num(n as f32)), line)
     } else {
-        Token::new(TokenType::Unknown, lexeme.clone(), Box::new(lexeme), line)
+        Token::new(TokenType::Unknown, lexeme.clone(), None, line)
     }
 }
 
@@ -47,7 +48,7 @@ fn scan_identifier(first: char, source: &mut Scanner, line: usize) -> Token {
         ( $($lex:expr => $ty:expr),* ) => {
             match lexeme.as_str() {
                 $( $lex => Token::from_ty($ty), )*
-                _ => Token::new(TokenType::Identifier, lexeme.clone(), Box::new(lexeme), line),
+                _ => Token::new(TokenType::Identifier, lexeme.clone(), None, line),
             }
         }
     }
@@ -131,7 +132,7 @@ pub fn scan_tokens(source: &str) -> Vec<Token> {
                 Some(Token::new(
                         TokenType::Unknown,
                         c.to_string(),
-                        Box::new(c.to_string()),
+                        None,
                         line,
                 ))
             }
