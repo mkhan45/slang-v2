@@ -32,8 +32,16 @@ fn scan_number(first: char, source: &mut Scanner, line: usize) -> Token {
 }
 
 fn scan_identifier(first: char, source: &mut Scanner, line: usize) -> Token {
+    fn is_ident_char(c: &char) -> bool {
+        match c {
+            c if c.is_alphanumeric() => true,
+            '_' => true,
+            _ => false,
+        }
+    }
+
     let lexeme = std::iter::once(first)
-        .chain(source.take_while(|&c| !c.is_whitespace()))
+        .chain(source.peeking_take_while(is_ident_char))
         .collect::<String>();
     macro_rules! add_lexemes {
         ( $($lex:expr => $ty:expr),* ) => {
@@ -116,21 +124,16 @@ pub fn scan_tokens(source: &str) -> Vec<Token> {
             }
             (Some('='), _) => Some(Token::from_ty(TokenType::Assign)),
             (Some('\"'), _) => Some(scan_string(&mut char_iter, line)),
+            (Some(c), _) if c.is_numeric() => Some(scan_number(c, &mut char_iter, line)),
+            (Some(c), _) if c.is_alphabetic() => Some(scan_identifier(c, &mut char_iter, line)),
+            (Some(c), _) if c.is_whitespace() => Some(Token::from_ty(TokenType::WhiteSpace)),
             (Some(c), _n_opt) => {
-                if c.is_numeric() {
-                    Some(scan_number(c, &mut char_iter, line))
-                } else if c.is_alphabetic() {
-                    Some(scan_identifier(c, &mut char_iter, line))
-                } else if c.is_whitespace() {
-                    Some(Token::from_ty(TokenType::WhiteSpace))
-                } else {
-                    Some(Token::new(
+                Some(Token::new(
                         TokenType::Unknown,
                         c.to_string(),
                         Box::new(c.to_string()),
                         line,
-                    ))
-                }
+                ))
             }
             (_, _) => None,
         }
