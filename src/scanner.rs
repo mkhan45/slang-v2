@@ -11,9 +11,9 @@ fn scan_string(source: &mut Scanner, line: usize) -> Token {
         .peeking_take_while(|&c| c != '\"')
         .collect::<String>();
     if source.next().is_some() {
-        Token::new(TokenType::Str, res.clone(), Some(Atom::Str(res)), line)
+        Token::new(TokenType::Literal(Atom::Str(res.clone())), res, line)
     } else {
-        Token::new(TokenType::Unknown, res, None, line)
+        Token::unknown(line)
     }
 }
 
@@ -24,11 +24,15 @@ fn scan_number(first: char, source: &mut Scanner, line: usize) -> Token {
         .collect::<String>();
 
     if let Ok(n) = lexeme.parse::<f32>() {
-        Token::new(TokenType::Number, lexeme.clone(), Some(Atom::Num(n)), line)
+        Token::new(TokenType::Literal(Atom::Num(n)), lexeme.clone(), line)
     } else if let Ok(n) = lexeme.parse::<isize>() {
-        Token::new(TokenType::Number, lexeme.clone(), Some(Atom::Num(n as f32)), line)
+        Token::new(
+            TokenType::Literal(Atom::Num(n as f32)),
+            lexeme.clone(),
+            line,
+        )
     } else {
-        Token::new(TokenType::Unknown, lexeme.clone(), None, line)
+        Token::new(TokenType::Unknown, lexeme.clone(), line)
     }
 }
 
@@ -48,7 +52,7 @@ fn scan_identifier(first: char, source: &mut Scanner, line: usize) -> Token {
         ( $($lex:expr => $ty:expr),* ) => {
             match lexeme.as_str() {
                 $( $lex => Token::from_ty($ty), )*
-                _ => Token::new(TokenType::Identifier, lexeme.clone(), None, line),
+                _ => Token::new(TokenType::Identifier, lexeme.clone(), line),
             }
         }
     }
@@ -128,14 +132,7 @@ pub fn scan_tokens(source: &str) -> Vec<Token> {
             (Some(c), _) if c.is_numeric() => Some(scan_number(c, &mut char_iter, line)),
             (Some(c), _) if c.is_alphabetic() => Some(scan_identifier(c, &mut char_iter, line)),
             (Some(c), _) if c.is_whitespace() => Some(Token::from_ty(TokenType::WhiteSpace)),
-            (Some(c), _n_opt) => {
-                Some(Token::new(
-                        TokenType::Unknown,
-                        c.to_string(),
-                        None,
-                        line,
-                ))
-            }
+            (Some(_), _) => Some(Token::unknown(line)),
             (_, _) => None,
         }
     };

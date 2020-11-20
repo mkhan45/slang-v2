@@ -1,65 +1,116 @@
-use std::{rc::Rc, fmt};
+use std::fmt;
 
 use crate::scanner::token::*;
 
-use itertools::Itertools;
-
 // https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 
-// pub enum S<'a> {
-//     Atom(&'a Token),
-//     Cons(&'a Token, Vec<S<'a>>),
-// }
+#[derive(Debug)]
+pub enum S {
+    Atom(Atom),
+    Cons(Op, Vec<S>),
+}
 
-// impl<'a> fmt::Display for S<'a> {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         match self {
-//             S::Atom(i) => write!(f, "{}", i),
-//             S::Cons(head, rest) => {
-//                 write!(f, "({}", head)?;
-//                 for s in rest {
-//                     write!(f, " {}", s)?
-//                 }
-//                 write!(f, ")")
-//             }
-//         }
-//     }
-// }
+#[derive(Debug)]
+pub enum Op {
+    Plus,
+    Minus,
+    Multiply,
+    Divide,
+}
 
-// pub fn expr<'a>(tokens: &'a mut impl Iterator<Item=&'a Token>) -> S {
-//     expr_bp(tokens, 0)
-// }
+impl fmt::Display for Op {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Op::Plus => "+",
+                Op::Minus => "-",
+                Op::Multiply => "*",
+                Op::Divide => "/",
+            }
+        )
+    }
+}
 
-// fn expr_bp<'a>(tokens: &'a mut impl Iterator<Item=&'a Token>, bp: u8) -> S {
-//     let mut tokens = tokens.peekable();
+impl fmt::Display for S {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            S::Atom(i) => write!(f, "{}", i),
+            S::Cons(head, rest) => {
+                write!(f, "({}", head)?;
+                for s in rest {
+                    write!(f, " {}", s)?
+                }
+                write!(f, ")")
+            }
+        }
+    }
+}
 
-//     let lhs = match tokens.next() {
-//         Some(t@Token {ty: TokenType::Number, ..}) => S::Atom(t),
-//         _ => unimplemented!(),
-//     };
+pub struct Lexer {
+    tokens: Vec<Token>,
+}
 
-//     while let (Some(t), p) = (tokens.next(), tokens.peek()) {
-//         let op = match p {
-//             Some(Token{ty: TokenType::Plus, ..}) => TokenType::Plus,
-//             None => break,
-//             Some(t) => panic!("bad token: {}", t)
-//         };
+impl Lexer {
+    pub fn new(mut tokens: Vec<Token>) -> Lexer {
+        tokens.reverse();
+        Lexer { tokens }
+    }
 
-//         let (l_bp, r_bp) = infix_binding_power(op);
-//         if l_bp < bp {
-//             break;
-//         }
+    fn next(&mut self) -> Token {
+        self.tokens
+            .pop()
+            .unwrap_or_else(|| Token::from_ty(TokenType::EOF))
+    }
 
-//         tokens.next();
-//         let rhs = expr_bp(&mut tokens, r_bp);
-//     }
+    fn peek(&mut self) -> Token {
+        self.tokens
+            .last()
+            .cloned()
+            .unwrap_or_else(|| Token::from_ty(TokenType::EOF))
+    }
+}
 
-//     lhs
-// }
+pub fn expr(lexer: &mut Lexer) -> S {
+    expr_bp(lexer, 0)
+}
 
-// fn infix_binding_power(op: TokenType) -> (u8, u8) {
-//     match op {
-//         TokenType::Plus => (1, 2),
-//         _ => panic!("bad op: {:?}", op)
-//     }
-// }
+fn expr_bp(lexer: &mut Lexer, bp: u8) -> S {
+    let nx = lexer.next();
+    let mut lhs = match nx.ty {
+        TokenType::Literal(a) => S::Atom(a),
+        _ => panic!("Invalid token {}", nx),
+    };
+
+    loop {
+        let nx = lexer.peek();
+        let op = match nx.ty {
+            TokenType::EOF | TokenType::WhiteSpace | TokenType::NewLine => break,
+            TokenType::Plus => Op::Plus,
+            TokenType::Minus => Op::Minus,
+            TokenType::Slash => Op::Divide,
+            TokenType::Star => Op::Multiply,
+            _ => unimplemented!(), // could be panic
+        };
+
+        let (l_bp, r_bp) = infix_binding_power(&op);
+        if l_bp < bp {
+            break;
+        }
+
+        lexer.next();
+        let rhs = expr_bp(lexer, r_bp);
+
+        lhs = S::Cons(op, vec![lhs, rhs]);
+    }
+
+    lhs
+}
+
+fn infix_binding_power(op: &Op) -> (u8, u8) {
+    match op {
+        Op::Plus | Op::Minus => (1, 2),
+        Op::Multiply | Op::Divide => (3, 4),
+    }
+}

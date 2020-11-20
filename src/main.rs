@@ -16,8 +16,10 @@ fn run(code: &str) -> Result<(), Box<dyn Error>> {
     if let Some(t) = tokens.iter().find(|t| t.ty == TokenType::Unknown) {
         Err(format!("Invalid {} on line {}", t.lexeme, t.line).into())
     } else {
-        tokens.iter().for_each(|t| println!("{}", t));
+        // tokens.iter().for_each(|t| println!("{}", t));
         // println!("{}", expr(&mut tokens.iter()));
+        let mut lexer = Lexer::new(tokens);
+        println!("{}", expr(&mut lexer));
         Ok(())
     }
 }

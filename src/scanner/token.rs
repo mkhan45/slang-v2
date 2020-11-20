@@ -1,7 +1,8 @@
+use std::fmt;
+
 #[allow(dead_code)]
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum TokenType {
-    Str,
     WhiteSpace,
     NewLine,
     LParen,
@@ -25,7 +26,7 @@ pub enum TokenType {
     Less,
     LessEqual,
     Identifier,
-    Number,
+    Literal(Atom),
     And,
     Or,
     Struct,
@@ -43,25 +44,37 @@ pub enum TokenType {
     Unknown,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Atom {
     Str(String),
     Num(f32),
 }
 
+impl fmt::Display for Atom {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Atom::Str(s) => write!(f, "{}", s),
+            Atom::Num(n) => write!(f, "{}", n),
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct Token {
     pub ty: TokenType,
     pub lexeme: String,
-    pub literal: Option<Atom>,
     pub line: usize,
 }
 
 impl Token {
-    pub fn new(ty: TokenType, lexeme: String, literal: Option<Atom>, line: usize) -> Self {
+    pub fn new(ty: TokenType, lexeme: String, line: usize) -> Self {
+        Token { ty, lexeme, line }
+    }
+
+    pub fn unknown(line: usize) -> Self {
         Token {
-            ty,
-            lexeme,
-            literal,
+            ty: TokenType::Unknown,
+            lexeme: "".to_string(),
             line,
         }
     }
@@ -70,7 +83,6 @@ impl Token {
         Token {
             ty,
             lexeme: "".to_string(),
-            literal: None,
             line: 0,
         }
     }
@@ -78,6 +90,6 @@ impl Token {
 
 impl std::fmt::Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} {} {:?}", self.ty, self.lexeme, self.literal)
+        write!(f, "{:?} {}", self.ty, self.lexeme)
     }
 }
