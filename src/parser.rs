@@ -2,6 +2,8 @@ use std::fmt;
 
 use crate::scanner::token::*;
 
+use crate::eval::atom::Atom;
+
 // https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 
 #[derive(Debug)]

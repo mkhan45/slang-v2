@@ -1,6 +1,7 @@
 pub mod token;
-use crate::token::Atom;
 use token::*;
+
+use crate::eval::atom::Atom;
 
 use itertools::Itertools;
 

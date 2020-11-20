@@ -1,4 +1,4 @@
-use std::fmt;
+use crate::eval::atom::Atom;
 
 #[allow(dead_code)]
 #[derive(Debug, PartialEq, Clone)]
@@ -42,21 +42,6 @@ pub enum TokenType {
     EOF,
     Hash,
     Unknown,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Atom {
-    Str(String),
-    Num(f32),
-}
-
-impl fmt::Display for Atom {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Atom::Str(s) => write!(f, "{}", s),
-            Atom::Num(n) => write!(f, "{}", n),
-        }
-    }
 }
 
 #[derive(Clone)]
