@@ -116,3 +116,44 @@ fn infix_binding_power(op: &Op) -> (u8, u8) {
         Op::Multiply | Op::Divide => (3, 4),
     }
 }
+
+// fn prefix_binding_power(op: &Op) -> ((), u8) {
+//     match op {
+//         Op::Plus | Op::Minus => ((), 5),
+//         _ => panic!("bad op: {:?}", op),
+//     }
+// }
+
+mod parser_tests {
+    use crate::scan_tokens;
+    use crate::Lexer;
+    use super::*;
+
+    // for some reason it thinks everything only used by tests is dead code
+
+    #[allow(dead_code)]
+    fn str_to_expr(s: &str) -> S {
+        let tokens = scan_tokens(s);
+        let mut lexer = Lexer::new(tokens);
+        expr(&mut lexer)
+    }
+
+    #[allow(unused_macros)]
+    macro_rules! test_expr {
+        ( $( $input:expr => $expected:expr ),* ) => {
+            $(
+                assert_eq!(str_to_expr($input).to_string(), $expected);
+            )*
+        }
+    }
+
+    #[test]
+    fn test_parser() {
+        test_expr!(
+            "1" => "1",
+            "5 + 5" => "(+ 5 5)",
+            "1 + 2 * 3" => "(+ 1 (* 2 3))",
+            "5 + 4 * 3 / 4 + 5" => "(+ (+ 5 (/ (* 4 3) 4)) 5)"
+        );
+    }
+}
