@@ -144,3 +144,47 @@ pub fn scan_tokens(source: &str) -> Vec<Token> {
         .filter(|t| ![TokenType::WhiteSpace, TokenType::Hash].contains(&t.ty))
         .collect::<Vec<Token>>()
 }
+
+#[allow(unused_imports)]
+mod lexer_tests {
+    use super::scan_tokens;
+    use crate::eval::atom::Atom;
+    use crate::scanner::token::*;
+
+    // for some reason it thinks everything only used by tests is dead code
+    // so none of the code here is actually dead
+
+    #[allow(unused_macros)]
+    macro_rules! test_lexer {
+        ( $( $input:expr => $expected:expr ),* ) => {
+            $(
+                assert_eq!(scan_tokens($input), $expected.collect::<Vec<Token>>());
+            )*
+        }
+    }
+
+    #[allow(dead_code)]
+    fn string(s: &str) -> Token {
+        Token::new(TokenType::Literal(Atom::Str(s.clone().to_string())), s.to_string(), 1)
+    }
+
+    #[allow(dead_code)]
+    fn identifier(n: &str) -> Token {
+        Token::new(TokenType::Identifier, n.to_string(), 1)
+    }
+
+    #[test]
+    fn test_lexer() {
+        test_lexer!(
+            "()" => [TokenType::LParen, TokenType::RParen].iter().map(|ty| Token::from_ty(ty.clone())),
+            "(  ) \"asdf\" " => [Token::from_ty(TokenType::LParen), 
+                                 Token::from_ty(TokenType::RParen),
+                                 string("asdf")].iter().cloned(),
+            ">= \"hello#notcomment\" identifier_here # yes comment" => 
+                                [Token::from_ty(TokenType::GreaterEqual), 
+                                 string("hello#notcomment"),
+                                 identifier("identifier_here")
+                                ].iter().cloned()
+        );
+    }
+}

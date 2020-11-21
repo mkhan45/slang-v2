@@ -82,6 +82,12 @@ fn expr_bp(lexer: &mut Lexer, bp: u8) -> S {
     let nx = lexer.next();
     let mut lhs = match nx.ty {
         TokenType::Literal(a) => S::Atom(a),
+        TokenType::Minus => {
+            let op = Op::Minus;
+            let ((), r_bp) = prefix_binding_power(&op);
+            let rhs = expr_bp(lexer, r_bp);
+            S::Cons(op, vec![rhs])
+        }
         _ => panic!("Invalid token {}", nx),
     };
 
@@ -117,17 +123,17 @@ fn infix_binding_power(op: &Op) -> (u8, u8) {
     }
 }
 
-// fn prefix_binding_power(op: &Op) -> ((), u8) {
-//     match op {
-//         Op::Plus | Op::Minus => ((), 5),
-//         _ => panic!("bad op: {:?}", op),
-//     }
-// }
+fn prefix_binding_power(op: &Op) -> ((), u8) {
+    match op {
+        Op::Plus | Op::Minus => ((), 9),
+        _ => panic!("bad op: {:?}", op),
+    }
+}
 
 mod parser_tests {
+    use super::*;
     use crate::scan_tokens;
     use crate::Lexer;
-    use super::*;
 
     // for some reason it thinks everything only used by tests is dead code
 

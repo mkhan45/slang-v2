@@ -44,7 +44,7 @@ pub enum TokenType {
     Unknown,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Token {
     pub ty: TokenType,
     pub lexeme: String,
