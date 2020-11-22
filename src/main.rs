@@ -20,7 +20,7 @@ fn run(code: &str) -> Result<(), Box<dyn Error>> {
         Err(format!("Invalid {} on line {}", t.lexeme, t.line).into())
     } else {
         let mut lexer = Lexer::new(tokens);
-        let expr = expr(&mut lexer);
+        let expr = parse_expr(&mut lexer);
         println!("{}", &expr);
         println!("{}", eval_expr(&expr));
         Ok(())

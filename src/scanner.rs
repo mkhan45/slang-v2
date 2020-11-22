@@ -145,16 +145,12 @@ pub fn scan_tokens(source: &str) -> Vec<Token> {
         .collect::<Vec<Token>>()
 }
 
-#[allow(unused_imports)]
+#[cfg(test)]
 mod lexer_tests {
     use super::scan_tokens;
     use crate::eval::atom::Atom;
     use crate::scanner::token::*;
 
-    // for some reason it thinks everything only used by tests is dead code
-    // so none of the code here is actually dead
-
-    #[allow(unused_macros)]
     macro_rules! test_lexer {
         ( $( $input:expr => $expected:expr ),* ) => {
             $(
@@ -163,7 +159,6 @@ mod lexer_tests {
         }
     }
 
-    #[allow(dead_code)]
     fn string(s: &str) -> Token {
         Token::new(
             TokenType::Literal(Atom::Str(s.clone().to_string())),
@@ -172,7 +167,6 @@ mod lexer_tests {
         )
     }
 
-    #[allow(dead_code)]
     fn identifier(n: &str) -> Token {
         Token::new(TokenType::Identifier, n.to_string(), 1)
     }

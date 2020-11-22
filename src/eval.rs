@@ -19,3 +19,30 @@ pub fn eval_expr(expr: &S) -> Atom {
         }
     }
 }
+
+#[cfg(test)]
+mod eval_tests {
+    use crate::scan_tokens;
+    use crate::parser::parse_expr;
+    use super::*;
+
+    macro_rules! eval_test {
+        ( $( $input:expr => $expected:expr ),* ) => {
+            $(
+                let expr = parse_expr(&mut Lexer::new(scan_tokens($input)));
+                assert_eq!(eval_expr(&expr), $expected);
+            )*
+        }
+    }
+
+    #[test]
+    fn test_eval() {
+        eval_test!(
+            "-2" => Atom::Num(-2.0),
+            "5 + 5" => Atom::Num(5.0 + 5.0),
+            "3 - 4 / 3" => Atom::Num(3.0 - 4.0 / 3.0),
+            "3 + 5 * 4" => Atom::Num(3.0 + 5.0 * 4.0),
+            "3 + 5 * 4 + -4 - -5" => Atom::Num(3.0 + 5.0 * 4.0 + -4.0 - -5.0)
+        );
+    }
+}

@@ -74,7 +74,7 @@ impl Lexer {
     }
 }
 
-pub fn expr(lexer: &mut Lexer) -> S {
+pub fn parse_expr(lexer: &mut Lexer) -> S {
     expr_bp(lexer, 0)
 }
 
@@ -130,21 +130,18 @@ fn prefix_binding_power(op: &Op) -> ((), u8) {
     }
 }
 
+#[cfg(test)]
 mod parser_tests {
     use super::*;
     use crate::scan_tokens;
     use crate::Lexer;
 
-    // for some reason it thinks everything only used by tests is dead code
-
-    #[allow(dead_code)]
     fn str_to_expr(s: &str) -> S {
         let tokens = scan_tokens(s);
         let mut lexer = Lexer::new(tokens);
-        expr(&mut lexer)
+        parse_expr(&mut lexer)
     }
 
-    #[allow(unused_macros)]
     macro_rules! test_expr {
         ( $( $input:expr => $expected:expr ),* ) => {
             $(
