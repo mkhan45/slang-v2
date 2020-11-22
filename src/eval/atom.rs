@@ -67,3 +67,12 @@ impl fmt::Display for Atom {
         }
     }
 }
+
+impl Atom {
+    pub fn negate(self) -> Atom {
+        match self {
+            Atom::Str(_) => todo!(),
+            Atom::Num(n) => Atom::Num(-1.0 * n),
+        }
+    }
+}

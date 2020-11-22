@@ -21,6 +21,7 @@ fn run(code: &str) -> Result<(), Box<dyn Error>> {
     } else {
         let mut lexer = Lexer::new(tokens);
         let expr = expr(&mut lexer);
+        println!("{}", &expr);
         println!("{}", eval_expr(&expr));
         Ok(())
     }
