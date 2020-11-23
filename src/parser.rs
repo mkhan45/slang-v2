@@ -75,18 +75,26 @@ impl Lexer {
 }
 
 pub fn parse_expr(lexer: &mut Lexer) -> S {
-    expr_bp(lexer, 0)
+    expr_bp(lexer, 0, 0)
 }
 
-fn expr_bp(lexer: &mut Lexer, bp: u8) -> S {
+fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
     let nx = lexer.next();
     let mut lhs = match nx.ty {
         TokenType::Literal(a) => S::Atom(a),
         TokenType::Minus => {
             let op = Op::Minus;
             let ((), r_bp) = prefix_binding_power(&op);
-            let rhs = expr_bp(lexer, r_bp);
+            let rhs = expr_bp(lexer, r_bp, paren_depth);
             S::Cons(op, vec![rhs])
+        }
+        TokenType::LParen => {
+            let lhs = expr_bp(lexer, 0, paren_depth + 1);
+            if lexer.next().ty == TokenType::RParen {
+                lhs
+            } else {
+                panic!("Unbalanced left parenthesis")
+            }
         }
         _ => panic!("Invalid token {}", nx),
     };
@@ -99,6 +107,12 @@ fn expr_bp(lexer: &mut Lexer, bp: u8) -> S {
             TokenType::Minus => Op::Minus,
             TokenType::Slash => Op::Divide,
             TokenType::Star => Op::Multiply,
+            TokenType::RParen => {
+                if paren_depth < 1 {
+                    panic!("Unbalanced right parenthesis");
+                }
+                break;
+            }
             _ => unimplemented!(), // could be panic
         };
 
@@ -108,7 +122,7 @@ fn expr_bp(lexer: &mut Lexer, bp: u8) -> S {
         }
 
         lexer.next();
-        let rhs = expr_bp(lexer, r_bp);
+        let rhs = expr_bp(lexer, r_bp, paren_depth);
 
         lhs = S::Cons(op, vec![lhs, rhs]);
     }
@@ -156,7 +170,9 @@ mod parser_tests {
             "1" => "1",
             "5 + 5" => "(+ 5 5)",
             "1 + 2 * 3" => "(+ 1 (* 2 3))",
-            "5 + 4 * 3 / 4 + 5" => "(+ (+ 5 (/ (* 4 3) 4)) 5)"
+            "5 + 4 * 3 / 4 + 5" => "(+ (+ 5 (/ (* 4 3) 4)) 5)",
+            "3 * (4 + 4)" => "(* 3 (+ 4 4))",
+            "(5 + 5) * 4" => "(* (+ 5 5) 4)"
         );
     }
 }
