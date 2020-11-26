@@ -14,6 +14,8 @@ use parser::*;
 mod eval;
 use eval::eval_expr;
 
+mod statement;
+
 fn run(code: &str) -> Result<(), Box<dyn Error>> {
     let tokens = scan_tokens(code);
     if let Some(t) = tokens.iter().find(|t| t.ty == TokenType::Unknown) {

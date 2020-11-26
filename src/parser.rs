@@ -16,6 +16,7 @@ pub enum S {
 pub enum Op {
     Plus,
     Minus,
+    Negate,
     Multiply,
     Divide,
 }
@@ -26,6 +27,7 @@ impl fmt::Display for Op {
             f,
             "{}",
             match self {
+                Op::Negate => "!",
                 Op::Plus => "+",
                 Op::Minus => "-",
                 Op::Multiply => "*",
@@ -78,12 +80,23 @@ pub fn parse_expr(lexer: &mut Lexer) -> S {
     expr_bp(lexer, 0, 0)
 }
 
+fn is_prefix_op(t: &TokenType) -> bool {
+    match t {
+        TokenType::Minus | TokenType::Bang => true,
+        _ => false,
+    }
+}
+
 fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
     let nx = lexer.next();
     let mut lhs = match nx.ty {
         TokenType::Literal(a) => S::Atom(a),
-        TokenType::Minus => {
-            let op = Op::Minus;
+        t if is_prefix_op(&t) => {
+            let op = match t {
+                TokenType::Minus => Op::Minus,
+                TokenType::Bang => Op::Negate,
+                _ => unreachable!(),
+            };
             let ((), r_bp) = prefix_binding_power(&op);
             let rhs = expr_bp(lexer, r_bp, paren_depth);
             S::Cons(op, vec![rhs])
@@ -107,6 +120,7 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
             TokenType::Minus => Op::Minus,
             TokenType::Slash => Op::Divide,
             TokenType::Star => Op::Multiply,
+            TokenType::Bang => Op::Negate,
             TokenType::RParen => {
                 if paren_depth < 1 {
                     panic!("Unbalanced right parenthesis");
@@ -134,12 +148,14 @@ fn infix_binding_power(op: &Op) -> (u8, u8) {
     match op {
         Op::Plus | Op::Minus => (1, 2),
         Op::Multiply | Op::Divide => (3, 4),
+        _ => panic!("bad op {:?}", op),
     }
 }
 
 fn prefix_binding_power(op: &Op) -> ((), u8) {
     match op {
-        Op::Plus | Op::Minus => ((), 9),
+        Op::Minus => ((), 9),
+        Op::Negate => ((), 10),
         _ => panic!("bad op: {:?}", op),
     }
 }

@@ -14,6 +14,7 @@ pub fn eval_expr(expr: &S) -> Atom {
                 (Op::Minus, [a]) => eval_expr(&a).negate(),
                 (Op::Multiply, [a, b, ..]) => eval_expr(&a) * eval_expr(&b),
                 (Op::Divide, [a, b, ..]) => eval_expr(&a) / eval_expr(&b),
+                (Op::Negate, [a]) => todo!(),
                 _ => panic!("invalid expr: {}", expr),
             }
         }
@@ -44,7 +45,9 @@ mod eval_tests {
             "3 + 5 * 4" => Atom::Num(3.0 + 5.0 * 4.0),
             "3 + 5 * 4 + -4 - -5" => Atom::Num(3.0 + 5.0 * 4.0 + -4.0 - -5.0),
             "3 * (4 + 5 * 8)" => Atom::Num(3.0 * (4.0 + 5.0 * 8.0)),
-            "4.4 * (9 * 5 - 8 / (3 - 4))" => Atom::Num(4.4 * (9.0 * 5.0 - 8.0 / (3.0 - 4.0)))
+            "4.4 * (9 * 5 - 8 /     (3 - 4))" => Atom::Num(4.4 * (9.0 * 5.0 - 8.0 / (3.0 - 4.0))),
+            "3.25/4 * 5" => Atom::Num(3.25 / 4.0 * 5.0),
+            "(4.0 * 12.5) + 6.0 / (12.5 + 3.0)" => Atom::Num((4.0 * 12.5) + 6.0 / (12.5 + 3.0))
         );
     }
 }
