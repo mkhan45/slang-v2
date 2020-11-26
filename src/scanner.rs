@@ -67,7 +67,8 @@ fn scan_identifier(first: char, source: &mut Scanner, line: usize) -> Token {
         "for" => TokenType::For,
         "while" => TokenType::While,
         "fn" => TokenType::Function,
-        "struct" => TokenType::Struct
+        "struct" => TokenType::Struct,
+        "print" => TokenType::Print
     )
 }
 
@@ -85,7 +86,8 @@ pub fn scan_tokens(source: &str) -> Vec<Token> {
         match (c, peek) {
             (Some('\n' | '\r'), _) => {
                 line += 1;
-                Some(Token::from_ty(TokenType::NewLine))
+                // Some(Token::from_ty(TokenType::NewLine))
+                Some(Token::from_ty(TokenType::WhiteSpace))
             }
             (Some('('), _) => Some(Token::from_ty(TokenType::LParen)),
             (Some(')'), _) => Some(Token::from_ty(TokenType::RParen)),

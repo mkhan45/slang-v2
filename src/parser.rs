@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::scanner::token::*;
+use crate::{scanner::token::*, statement::Stmt};
 
 use crate::eval::atom::Atom;
 
@@ -74,6 +74,28 @@ impl Lexer {
             .cloned()
             .unwrap_or_else(|| Token::from_ty(TokenType::EOF))
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.tokens.is_empty()
+    }
+}
+
+pub fn parse_stmt(lexer: &mut Lexer) -> Stmt {
+    match lexer.peek() {
+        Token {
+            ty: TokenType::Print,
+            ..
+        } => {
+            lexer.next();
+            assert_eq!(lexer.next().ty, TokenType::LParen);
+            let res = Stmt::PrintStmt(parse_expr(lexer));
+            assert_eq!(lexer.next().ty, TokenType::RParen);
+            res
+        }
+        t => {
+            todo!()
+        }
+    }
 }
 
 pub fn parse_expr(lexer: &mut Lexer) -> S {
@@ -122,9 +144,9 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
             TokenType::Star => Op::Multiply,
             TokenType::Bang => Op::Negate,
             TokenType::RParen => {
-                if paren_depth < 1 {
-                    panic!("Unbalanced right parenthesis");
-                }
+                // if paren_depth < 1 {
+                //     panic!("Unbalanced right parenthesis");
+                // }
                 break;
             }
             _ => unimplemented!(), // could be panic

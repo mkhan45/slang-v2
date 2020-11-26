@@ -13,6 +13,7 @@ use parser::*;
 
 mod eval;
 use eval::eval_expr;
+use statement::{State, Stmt};
 
 mod statement;
 
@@ -21,18 +22,30 @@ fn run(code: &str) -> Result<(), Box<dyn Error>> {
     if let Some(t) = tokens.iter().find(|t| t.ty == TokenType::Unknown) {
         Err(format!("Invalid {} on line {}", t.lexeme, t.line).into())
     } else {
-        println!(
-            "{:?}",
-            tokens
-                .clone()
-                .iter()
-                .map(|t| t.ty.clone())
-                .collect::<Vec<TokenType>>()
-        );
+        // println!(
+        //     "{:?}",
+        //     tokens
+        //         .clone()
+        //         .iter()
+        //         .map(|t| t.ty.clone())
+        //         .collect::<Vec<TokenType>>()
+        // );
         let mut lexer = Lexer::new(tokens);
-        let expr = parse_expr(&mut lexer);
-        println!("{}", &expr);
-        println!("{}", eval_expr(&expr));
+        // let expr = parse_expr(&mut lexer);
+        // println!("{}", &expr);
+        // println!("{}", eval_expr(&expr));
+
+        let mut top_state = State::default();
+        let add_stmt = || {
+            if lexer.is_empty() {
+                None
+            } else {
+                Some(parse_stmt(&mut lexer))
+            }
+        };
+
+        std::iter::from_fn(add_stmt).for_each(|stmt| stmt.execute(&mut top_state));
+
         Ok(())
     }
 }
