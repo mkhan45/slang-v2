@@ -86,6 +86,13 @@ impl Lexer {
 pub fn parse_stmt(lexer: &mut Lexer) -> Stmt {
     match lexer.peek() {
         Token {
+            ty: TokenType::NewLine,
+            ..
+        } => {
+            lexer.next();
+            parse_stmt(lexer)
+        }
+        Token {
             ty: TokenType::Print,
             ..
         } => {
@@ -93,6 +100,7 @@ pub fn parse_stmt(lexer: &mut Lexer) -> Stmt {
             assert_eq!(lexer.next().ty, TokenType::LParen);
             let res = Stmt::PrintStmt(parse_expr(lexer));
             assert_eq!(lexer.next().ty, TokenType::RParen);
+            assert_eq!(lexer.next().ty, TokenType::NewLine);
             res
         }
         Token {
@@ -169,7 +177,10 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
     loop {
         let nx = lexer.peek();
         let op = match nx.ty {
-            TokenType::EOF | TokenType::WhiteSpace | TokenType::NewLine => break,
+            TokenType::EOF | TokenType::NewLine => {
+                lexer.next();
+                break;
+            }
             TokenType::Plus => Op::Plus,
             TokenType::Minus => Op::Minus,
             TokenType::Slash => Op::Divide,

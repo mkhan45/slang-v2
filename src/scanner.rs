@@ -87,8 +87,8 @@ pub fn scan_tokens(source: &str) -> Vec<Token> {
         match (c, peek) {
             (Some('\n' | '\r'), _) => {
                 line += 1;
-                // Some(Token::from_ty(TokenType::NewLine))
-                Some(Token::from_ty(TokenType::WhiteSpace))
+                Some(Token::from_ty(TokenType::NewLine))
+                // Some(Token::from_ty(TokenType::WhiteSpace))
             }
             (Some('('), _) => Some(Token::from_ty(TokenType::LParen)),
             (Some(')'), _) => Some(Token::from_ty(TokenType::RParen)),
