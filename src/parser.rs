@@ -81,6 +81,10 @@ impl Lexer {
     pub fn is_empty(&self) -> bool {
         self.tokens.is_empty()
     }
+
+    pub fn prepend(&mut self, token: Token) {
+        self.tokens.push(token);
+    }
 }
 
 pub fn parse_stmt(lexer: &mut Lexer) -> Stmt {
@@ -128,13 +132,18 @@ pub fn parse_stmt(lexer: &mut Lexer) -> Stmt {
             lexeme: name,
             ..
         } => {
-            lexer.next();
-            assert_eq!(lexer.next().ty, TokenType::Assign);
-            Stmt::Dec(Declaration {
-                lhs: name,
-                rhs: parse_expr(lexer),
-                alias: false,
-            })
+            let nx = lexer.next();
+            if lexer.peek().ty == TokenType::Assign {
+                lexer.next();
+                Stmt::Dec(Declaration {
+                    lhs: name,
+                    rhs: parse_expr(lexer),
+                    alias: false,
+                })
+            } else {
+                lexer.prepend(nx);
+                Stmt::ExprStmt(parse_expr(lexer))
+            }
         }
         _t => Stmt::ExprStmt(parse_expr(lexer)),
     }

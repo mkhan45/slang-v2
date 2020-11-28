@@ -1,8 +1,10 @@
 #![feature(or_patterns)]
 #![feature(type_alias_impl_trait)]
 
+use crate::eval::atom::Atom;
 use std::error::Error;
 use std::io;
+use std::io::Write;
 
 mod scanner;
 use scanner::token::*;
@@ -16,7 +18,7 @@ use statement::State;
 
 mod statement;
 
-fn run(code: &str, state: &mut State) -> Result<(), Box<dyn Error>> {
+fn run(code: &str, state: &mut State) -> Result<Option<Atom>, Box<dyn Error>> {
     let tokens = scan_tokens(code);
     if let Some(t) = tokens.iter().find(|t| t.ty == TokenType::Unknown) {
         Err(format!("Invalid {:?} ({}) on line {}", t.ty, t.lexeme, t.line).into())
@@ -42,11 +44,12 @@ fn run(code: &str, state: &mut State) -> Result<(), Box<dyn Error>> {
             }
         };
 
+        let mut res = None;
         std::iter::from_fn(add_stmt).for_each(|stmt| {
-            stmt.execute(state);
+            res = stmt.execute(state);
         });
 
-        Ok(())
+        Ok(res)
     }
 }
 
@@ -61,10 +64,12 @@ fn run_file(
 
 fn run_prompt(state: &mut State) -> Result<(), Box<dyn Error>> {
     let stdin = io::stdin();
+    let mut stdout = io::stdout();
     let mut buffer = String::new();
 
     loop {
-        println!(">> ");
+        print!(">> ");
+        stdout.flush()?;
         buffer.clear();
         stdin.read_line(&mut buffer)?;
 
@@ -72,7 +77,9 @@ fn run_prompt(state: &mut State) -> Result<(), Box<dyn Error>> {
             break;
         }
 
-        run(&buffer, state)?;
+        if let Some(a) = run(&buffer, state)? {
+            println!("{}", a);
+        }
     }
 
     Ok(())

@@ -57,13 +57,17 @@ pub enum Stmt {
 }
 
 impl Stmt {
-    pub fn execute(self, state: &mut State) {
+    pub fn execute(self, state: &mut State) -> Option<Atom> {
         match self {
-            Stmt::ExprStmt(expr) => {
-                eval_expr(&expr, state);
+            Stmt::ExprStmt(expr) => Some(eval_expr(&expr, state)),
+            Stmt::PrintStmt(expr) => {
+                println!("{}", eval_expr(&expr, state));
+                None
             }
-            Stmt::PrintStmt(expr) => println!("{}", eval_expr(&expr, state)),
-            Stmt::Dec(dec) => state.declare(dec),
+            Stmt::Dec(dec) => {
+                state.declare(dec);
+                None
+            }
         }
     }
 }
