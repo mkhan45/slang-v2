@@ -7,20 +7,26 @@ use crate::{
 
 #[derive(Default)]
 pub struct State {
-    vars: HashMap<String, Atom>,
+    pub vars: HashMap<String, Atom>,
 }
 
 impl State {
     fn declare(&mut self, dec: Declaration) {
-        match self.vars.get(&dec.lhs) {
-            Some(old_val) => {
-                let new_val = eval_expr(&dec.rhs);
-                if std::mem::discriminant(&old_val) == std::mem::discriminant(&&new_val) {
+        let disc = {
+            let var = self.vars.get(&dec.lhs);
+            var.map(std::mem::discriminant)
+        };
+
+        match disc {
+            Some(d) => {
+                let new_val = eval_expr(&dec.rhs, self);
+                if d == std::mem::discriminant(&&new_val) {
                     self.vars.insert(dec.lhs, new_val);
                 }
             }
             None => {
-                self.vars.insert(dec.lhs, eval_expr(&dec.rhs));
+                let new_val = eval_expr(&dec.rhs, self);
+                self.vars.insert(dec.lhs, new_val);
             }
         }
     }
@@ -28,8 +34,8 @@ impl State {
 
 #[derive(Debug)]
 pub struct Declaration {
-    lhs: String,
-    rhs: S,
+    pub lhs: String,
+    pub rhs: S,
 }
 
 #[derive(Debug)]
@@ -42,8 +48,10 @@ pub enum Stmt {
 impl Stmt {
     pub fn execute(self, state: &mut State) {
         match self {
-            Stmt::ExprStmt(_expr) => {}
-            Stmt::PrintStmt(expr) => println!("{}", eval_expr(&expr)),
+            Stmt::ExprStmt(expr) => {
+                eval_expr(&expr, state);
+            }
+            Stmt::PrintStmt(expr) => println!("{}", eval_expr(&expr, state)),
             Stmt::Dec(dec) => state.declare(dec),
         }
     }

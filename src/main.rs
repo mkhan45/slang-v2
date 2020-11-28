@@ -12,15 +12,14 @@ mod parser;
 use parser::*;
 
 mod eval;
-use eval::eval_expr;
-use statement::{State, Stmt};
+use statement::State;
 
 mod statement;
 
-fn run(code: &str) -> Result<(), Box<dyn Error>> {
+fn run(code: &str, state: &mut State) -> Result<(), Box<dyn Error>> {
     let tokens = scan_tokens(code);
     if let Some(t) = tokens.iter().find(|t| t.ty == TokenType::Unknown) {
-        Err(format!("Invalid {} on line {}", t.lexeme, t.line).into())
+        Err(format!("Invalid {:?} ({}) on line {}", t.ty, t.lexeme, t.line).into())
     } else {
         // println!(
         //     "{:?}",
@@ -35,8 +34,7 @@ fn run(code: &str) -> Result<(), Box<dyn Error>> {
         // println!("{}", &expr);
         // println!("{}", eval_expr(&expr));
 
-        let mut top_state = State::default();
-        let add_stmt = || {
+        let add_stmt = move || {
             if lexer.is_empty() {
                 None
             } else {
@@ -44,7 +42,9 @@ fn run(code: &str) -> Result<(), Box<dyn Error>> {
             }
         };
 
-        std::iter::from_fn(add_stmt).for_each(|stmt| stmt.execute(&mut top_state));
+        std::iter::from_fn(add_stmt).for_each(|stmt| {
+            stmt.execute(state);
+        });
 
         Ok(())
     }
@@ -52,13 +52,14 @@ fn run(code: &str) -> Result<(), Box<dyn Error>> {
 
 fn run_file(
     path: impl AsRef<std::path::Path> + std::fmt::Debug + std::clone::Clone,
+    state: &mut State,
 ) -> Result<(), Box<dyn Error>> {
     let file = std::fs::read_to_string(path)?;
-    run(&file)?;
+    run(&file, state)?;
     Ok(())
 }
 
-fn run_prompt() -> Result<(), Box<dyn Error>> {
+fn run_prompt(state: &mut State) -> Result<(), Box<dyn Error>> {
     let stdin = io::stdin();
     let mut buffer = String::new();
 
@@ -71,7 +72,7 @@ fn run_prompt() -> Result<(), Box<dyn Error>> {
             break;
         }
 
-        run(&buffer)?;
+        run(&buffer, state)?;
     }
 
     Ok(())
@@ -80,9 +81,11 @@ fn run_prompt() -> Result<(), Box<dyn Error>> {
 fn main() -> Result<(), Box<dyn Error>> {
     let args = std::env::args().collect::<Vec<String>>();
 
+    let mut top_state = State::default();
+
     match args.len() {
-        0 | 1 => run_prompt(),
-        2 => run_file(args[1].clone()),
+        0 | 1 => run_prompt(&mut top_state),
+        2 => run_file(args[1].clone(), &mut top_state),
         _ => {
             println!("Usage: rlox [script]");
             Ok(())

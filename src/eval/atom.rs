@@ -5,6 +5,7 @@ use std::ops::{Add, Div, Mul, Sub};
 pub enum Atom {
     Str(String),
     Num(f32),
+    Identifier(String),
 }
 
 impl Add for Atom {
@@ -16,6 +17,7 @@ impl Add for Atom {
             (Atom::Str(_), Atom::Num(_)) => todo!(),
             (Atom::Num(_), Atom::Str(_)) => todo!(),
             (Atom::Num(a), Atom::Num(b)) => Atom::Num(a + b),
+            _ => todo!(),
         }
     }
 }
@@ -29,6 +31,7 @@ impl Sub for Atom {
             (Atom::Str(_), Atom::Num(_)) => todo!(),
             (Atom::Num(_), Atom::Str(_)) => todo!(),
             (Atom::Num(a), Atom::Num(b)) => Atom::Num(a - b),
+            _ => todo!(),
         }
     }
 }
@@ -42,6 +45,7 @@ impl Mul for Atom {
             (Atom::Str(_), Atom::Num(_)) => todo!(),
             (Atom::Num(_), Atom::Str(_)) => todo!(),
             (Atom::Num(a), Atom::Num(b)) => Atom::Num(a * b),
+            _ => todo!(),
         }
     }
 }
@@ -55,6 +59,7 @@ impl Div for Atom {
             (Atom::Str(_), Atom::Num(_)) => todo!(),
             (Atom::Num(_), Atom::Str(_)) => todo!(),
             (Atom::Num(a), Atom::Num(b)) => Atom::Num(a / b),
+            _ => todo!(),
         }
     }
 }
@@ -64,6 +69,7 @@ impl fmt::Display for Atom {
         match self {
             Atom::Str(s) => write!(f, "{}", s),
             Atom::Num(n) => write!(f, "{}", n),
+            _ => todo!(),
         }
     }
 }
@@ -73,6 +79,7 @@ impl Atom {
         match self {
             Atom::Str(_) => todo!(),
             Atom::Num(n) => Atom::Num(-1.0 * n),
+            _ => todo!(),
         }
     }
 }

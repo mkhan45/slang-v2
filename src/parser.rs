@@ -1,6 +1,9 @@
 use std::fmt;
 
-use crate::{scanner::token::*, statement::Stmt};
+use crate::{
+    scanner::token::*,
+    statement::{Declaration, Stmt},
+};
 
 use crate::eval::atom::Atom;
 
@@ -92,9 +95,19 @@ pub fn parse_stmt(lexer: &mut Lexer) -> Stmt {
             assert_eq!(lexer.next().ty, TokenType::RParen);
             res
         }
-        t => {
-            todo!()
+        Token {
+            ty: TokenType::Identifier,
+            lexeme: name,
+            ..
+        } => {
+            lexer.next();
+            assert_eq!(lexer.next().ty, TokenType::Assign);
+            Stmt::Dec(Declaration {
+                lhs: name,
+                rhs: parse_expr(lexer),
+            })
         }
+        _t => Stmt::ExprStmt(parse_expr(lexer)),
     }
 }
 
@@ -103,16 +116,14 @@ pub fn parse_expr(lexer: &mut Lexer) -> S {
 }
 
 fn is_prefix_op(t: &TokenType) -> bool {
-    match t {
-        TokenType::Minus | TokenType::Bang => true,
-        _ => false,
-    }
+    matches!(t, TokenType::Minus | TokenType::Bang)
 }
 
 fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
     let nx = lexer.next();
     let mut lhs = match nx.ty {
         TokenType::Literal(a) => S::Atom(a),
+        TokenType::Identifier => S::Atom(Atom::Identifier(nx.lexeme)),
         t if is_prefix_op(&t) => {
             let op = match t {
                 TokenType::Minus => Op::Minus,

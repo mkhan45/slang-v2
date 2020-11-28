@@ -1,20 +1,28 @@
 use crate::parser::*;
+use crate::State;
 
 pub mod atom;
 use atom::Atom;
 
-pub fn eval_expr(expr: &S) -> Atom {
+pub fn eval_expr(expr: &S, state: &mut State) -> Atom {
+    let mut eval = |expr: &S| eval_expr(expr, state);
     match expr {
-        S::Atom(a) => a.clone(),
+        S::Atom(a) => match a {
+            Atom::Identifier(name) => match state.vars.get(name) {
+                Some(a) => a.clone(),
+                None => panic!("Variable {} undefined", name),
+            },
+            _ => a.clone(),
+        },
         S::Cons(op, xs) => {
             let slice = xs.as_slice();
             match (op, slice) {
-                (Op::Plus, [a, b, ..]) => eval_expr(&a) + eval_expr(&b),
-                (Op::Minus, [a, b, ..]) => eval_expr(&a) - eval_expr(&b),
-                (Op::Minus, [a]) => eval_expr(&a).negate(),
-                (Op::Multiply, [a, b, ..]) => eval_expr(&a) * eval_expr(&b),
-                (Op::Divide, [a, b, ..]) => eval_expr(&a) / eval_expr(&b),
-                (Op::Negate, [a]) => todo!(),
+                (Op::Plus, [a, b, ..]) => eval(&a) + eval(&b),
+                (Op::Minus, [a, b, ..]) => eval(&a) - eval(&b),
+                (Op::Minus, [a]) => eval(&a).negate(),
+                (Op::Multiply, [a, b, ..]) => eval(&a) * eval(&b),
+                (Op::Divide, [a, b, ..]) => eval(&a) / eval(&b),
+                (Op::Negate, [_a]) => todo!(),
                 _ => panic!("invalid expr: {}", expr),
             }
         }
