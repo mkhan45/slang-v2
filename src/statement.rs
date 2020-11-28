@@ -17,16 +17,26 @@ impl State {
             var.map(std::mem::discriminant)
         };
 
-        match disc {
-            Some(d) => {
+        match (disc, dec.alias) {
+            (Some(d), alias) => {
                 let new_val = eval_expr(&dec.rhs, self);
-                if d == std::mem::discriminant(&&new_val) {
+                if d == std::mem::discriminant(&&new_val) || alias {
                     self.vars.insert(dec.lhs, new_val);
+                } else {
+                    panic!(
+                        "Mismatched types for {}, can't assign {:?} to {:?}",
+                        dec.lhs,
+                        new_val,
+                        self.vars.get(&dec.lhs).unwrap()
+                    );
                 }
             }
-            None => {
+            (None, true) => {
                 let new_val = eval_expr(&dec.rhs, self);
                 self.vars.insert(dec.lhs, new_val);
+            }
+            (None, false) => {
+                panic!("Uninitialized variable {}", dec.lhs)
             }
         }
     }
@@ -36,6 +46,7 @@ impl State {
 pub struct Declaration {
     pub lhs: String,
     pub rhs: S,
+    pub alias: bool,
 }
 
 #[derive(Debug)]

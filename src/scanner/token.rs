@@ -3,6 +3,7 @@ use crate::eval::atom::Atom;
 #[allow(dead_code)]
 #[derive(Debug, PartialEq, Clone)]
 pub enum TokenType {
+    Let,
     WhiteSpace,
     NewLine,
     LParen,

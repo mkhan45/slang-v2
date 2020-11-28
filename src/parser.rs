@@ -96,6 +96,26 @@ pub fn parse_stmt(lexer: &mut Lexer) -> Stmt {
             res
         }
         Token {
+            ty: TokenType::Let, ..
+        } => {
+            lexer.next();
+            if let Token {
+                ty: TokenType::Identifier,
+                lexeme: name,
+                ..
+            } = lexer.next()
+            {
+                assert_eq!(lexer.next().ty, TokenType::Assign);
+                Stmt::Dec(Declaration {
+                    lhs: name,
+                    rhs: parse_expr(lexer),
+                    alias: true,
+                })
+            } else {
+                panic!();
+            }
+        }
+        Token {
             ty: TokenType::Identifier,
             lexeme: name,
             ..
@@ -105,6 +125,7 @@ pub fn parse_stmt(lexer: &mut Lexer) -> Stmt {
             Stmt::Dec(Declaration {
                 lhs: name,
                 rhs: parse_expr(lexer),
+                alias: false,
             })
         }
         _t => Stmt::ExprStmt(parse_expr(lexer)),

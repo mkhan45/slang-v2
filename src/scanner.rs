@@ -59,6 +59,7 @@ fn scan_identifier(first: char, source: &mut Scanner, line: usize) -> Token {
     }
 
     add_lexemes!(
+        "let" => TokenType::Let,
         "if" => TokenType::If,
         "else" => TokenType::Else,
         "elif" => TokenType::Elif,
