@@ -56,13 +56,12 @@ fn run(code: &str, state: &mut State) -> Result<Option<Atom>, Box<dyn Error>> {
 fn run_file(
     path: impl AsRef<std::path::Path> + std::fmt::Debug + std::clone::Clone,
     state: &mut State,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<Option<Atom>, Box<dyn Error>> {
     let file = std::fs::read_to_string(path)?;
-    run(&file, state)?;
-    Ok(())
+    run(&file, state)
 }
 
-fn run_prompt(state: &mut State) -> Result<(), Box<dyn Error>> {
+fn run_prompt(state: &mut State) -> Result<Option<Atom>, Box<dyn Error>> {
     let stdin = io::stdin();
     let mut stdout = io::stdout();
     let mut buffer = String::new();
@@ -82,7 +81,8 @@ fn run_prompt(state: &mut State) -> Result<(), Box<dyn Error>> {
         }
     }
 
-    Ok(())
+    // TODO: make this return the last expr
+    Ok(None)
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -95,7 +95,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         2 => run_file(args[1].clone(), &mut top_state),
         _ => {
             println!("Usage: rlox [script]");
-            Ok(())
+            Err("bad input".into())
         }
-    }
+    }?;
+
+    Ok(())
 }

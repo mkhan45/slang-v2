@@ -71,3 +71,40 @@ impl Stmt {
         }
     }
 }
+
+#[cfg(test)]
+mod stmt_tests {
+    use crate::run_file;
+    use crate::Atom;
+    use crate::State;
+
+    macro_rules! test_files {
+        () => {};
+        ( $fn_name:ident, $file:expr => $expected:expr; $($tail:tt)* ) => {
+            #[test]
+            fn $fn_name() {
+                let mut top_state = State::default();
+                let output = run_file(format!("test_files/{}", $file), &mut top_state).unwrap();
+                assert_eq!(output, $expected);
+            }
+
+            test_files!($($tail)*);
+        };
+        ( $fn_name:ident, $file:expr; $($tail:tt)* ) => {
+            #[test]
+            #[should_panic]
+            fn $fn_name() {
+                let mut top_state = State::default();
+                run_file(format!("test_files/{}", $file), &mut top_state).unwrap();
+            }
+
+            test_files!($($tail)*);
+        };
+    }
+
+    test_files!(
+        basic1, "basic1.slang" => Some(Atom::Num(20.0));
+        basic2, "basic2.slang" => Some(Atom::Num(5.0));
+        error1, "error1.slang";
+    );
+}

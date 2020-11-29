@@ -37,9 +37,10 @@ mod eval_tests {
 
     macro_rules! eval_test {
         ( $( $input:expr => $expected:expr ),* ) => {
+            let mut top_state = State::default();
             $(
                 let expr = parse_expr(&mut Lexer::new(scan_tokens($input)));
-                assert_eq!(eval_expr(&expr), $expected);
+                assert_eq!(eval_expr(&expr, &mut top_state), $expected);
             )*
         }
     }
