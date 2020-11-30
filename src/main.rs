@@ -1,5 +1,6 @@
 #![feature(or_patterns)]
 #![feature(type_alias_impl_trait)]
+#![feature(bindings_after_at)]
 
 use crate::eval::atom::Atom;
 use std::error::Error;

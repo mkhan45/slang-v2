@@ -57,13 +57,13 @@ impl Token {
         Token { ty, lexeme, line }
     }
 
-    pub fn unknown(line: usize) -> Self {
-        Token {
-            ty: TokenType::Unknown,
-            lexeme: "".to_string(),
-            line,
-        }
-    }
+    // pub fn unknown(line: usize) -> Self {
+    //     Token {
+    //         ty: TokenType::Unknown,
+    //         lexeme: "".to_string(),
+    //         line,
+    //     }
+    // }
 
     pub fn from_ty(ty: TokenType) -> Self {
         Token {
