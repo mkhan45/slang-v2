@@ -71,26 +71,30 @@ fn ident_token(source: &[char]) -> Vec<Token> {
 }
 
 fn token_recurse(source: &[char]) -> Vec<Token> {
+    fn recur(ty: TokenType, s: &[char]) -> Vec<Token> {
+        [vec![Token::from_ty(ty)], token_recurse(s)].concat()
+    }
+
     match &source {
         [] | ['\n' | '\r'] => vec![],
         ['#', ..] => token_recurse(skip_comment(source).as_slice()),
-        ['\n' | '\r', xs@..] => [vec![Token::from_ty(TokenType::NewLine)], token_recurse(xs)].concat(),
-        ['+', '=', xs@..] => [vec![Token::from_ty(TokenType::PlusAssign)], token_recurse(xs)].concat(),
-        ['!', '=', xs@..] => [vec![Token::from_ty(TokenType::BangEqual)], token_recurse(xs)].concat(),
-        ['<', '=', xs@..] => [vec![Token::from_ty(TokenType::LessEqual)], token_recurse(xs)].concat(),
-        ['>', '=', xs@..] => [vec![Token::from_ty(TokenType::GreaterEqual)], token_recurse(xs)].concat(),
-        ['=', '=', xs@..] => [vec![Token::from_ty(TokenType::Equal)], token_recurse(xs)].concat(),
-        ['=', xs@..] => [vec![Token::from_ty(TokenType::Assign)], token_recurse(xs)].concat(),
-        ['(', xs@..] => [vec![Token::from_ty(TokenType::LParen)], token_recurse(xs)].concat(),
-        [')', xs@..] => [vec![Token::from_ty(TokenType::RParen)], token_recurse(xs)].concat(),
-        ['{', xs@..] => [vec![Token::from_ty(TokenType::LBrace)], token_recurse(xs)].concat(),
-        ['}', xs@..] => [vec![Token::from_ty(TokenType::RBrace)], token_recurse(xs)].concat(),
-        [',', xs@..] => [vec![Token::from_ty(TokenType::Comma)], token_recurse(xs)].concat(),
-        ['*', xs@..] => [vec![Token::from_ty(TokenType::Star)], token_recurse(xs)].concat(),
-        ['/', xs@..] => [vec![Token::from_ty(TokenType::Slash)], token_recurse(xs)].concat(),
-        ['-', xs@..] => [vec![Token::from_ty(TokenType::Minus)], token_recurse(xs)].concat(),
-        ['+', xs@..] => [vec![Token::from_ty(TokenType::Plus)], token_recurse(xs)].concat(),
-        ['.', xs@..] => [vec![Token::from_ty(TokenType::Dot)], token_recurse(xs)].concat(),
+        ['\n' | '\r', xs@..] => recur(TokenType::NewLine, xs),
+        ['+', '=', xs@..] => recur(TokenType::PlusAssign, xs),
+        ['!', '=', xs@..] => recur(TokenType::BangEqual, xs),
+        ['<', '=', xs@..] => recur(TokenType::LessEqual, xs),
+        ['>', '=', xs@..] => recur(TokenType::GreaterEqual, xs),
+        ['=', '=', xs@..] => recur(TokenType::Equal, xs),
+        ['=', xs@..] => recur(TokenType::Assign, xs),
+        ['(', xs@..] => recur(TokenType::LParen, xs),
+        [')', xs@..] => recur(TokenType::RParen, xs),
+        ['{', xs@..] => recur(TokenType::LBrace, xs),
+        ['}', xs@..] => recur(TokenType::RBrace, xs),
+        [',', xs@..] => recur(TokenType::Comma, xs),
+        ['*', xs@..] => recur(TokenType::Star, xs),
+        ['/', xs@..] => recur(TokenType::Slash, xs),
+        ['-', xs@..] => recur(TokenType::Minus, xs),
+        ['+', xs@..] => recur(TokenType::Plus, xs),
+        ['.', xs@..] => recur(TokenType::Dot, xs),
         ['\"', xs@..] => string_token(xs),
         ls@[c, ..] if c.is_numeric() => num_token(ls),
         ls@[c, ..] if c.is_alphabetic() => ident_token(ls),
