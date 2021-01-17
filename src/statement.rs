@@ -6,15 +6,39 @@ use crate::{
     parser::*,
 };
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct State {
-    pub vars: HashMap<String, Atom>,
+    pub scopes: Vec<Scope>,
+}
+
+impl Default for State {
+    fn default() -> Self {
+        State {
+            scopes: vec![Scope::default()],
+        }
+    }
 }
 
 impl State {
-    fn declare(&mut self, dec: Declaration) {
+    pub fn get_variable(&self, var: &String) -> Option<&Atom> {
+        self.scopes
+            .iter()
+            .rev()
+            .find_map(|scope| scope.vars.get(var))
+    }
+
+    fn modify_variable(&mut self, var: &String, val: Atom) {
+        for scope in &mut self.scopes {
+            if scope.vars.contains_key(var) {
+                scope.vars.insert(var.to_string(), val);
+                break;
+            }
+        }
+    }
+
+    pub fn declare(&mut self, dec: Declaration) {
         let disc = {
-            let var = self.vars.get(&dec.lhs);
+            let var = self.get_variable(&dec.lhs);
             var.map(std::mem::discriminant)
         };
 
@@ -22,25 +46,34 @@ impl State {
             (Some(d), alias) => {
                 let new_val = eval_expr(&dec.rhs, self);
                 if d == std::mem::discriminant(&&new_val) || alias {
-                    self.vars.insert(dec.lhs, new_val);
+                    self.modify_variable(&dec.lhs, new_val);
                 } else {
                     panic!(
                         "Mismatched types for {}, can't assign {:?} to {:?}",
                         dec.lhs,
                         new_val,
-                        self.vars.get(&dec.lhs).unwrap()
+                        self.get_variable(&dec.lhs).unwrap()
                     );
                 }
             }
             (None, true) => {
                 let new_val = eval_expr(&dec.rhs, self);
-                self.vars.insert(dec.lhs, new_val);
+                self.scopes
+                    .last_mut()
+                    .unwrap()
+                    .vars
+                    .insert(dec.lhs, new_val);
             }
             (None, false) => {
                 panic!("Uninitialized variable {}", dec.lhs)
             }
         }
     }
+}
+
+#[derive(Default, Debug)]
+pub struct Scope {
+    pub vars: HashMap<String, Atom>,
 }
 
 #[derive(Debug)]
@@ -127,6 +160,10 @@ mod stmt_tests {
     test_files!(
         basic1, "basic1.slang" => Some(Atom::Num(20.0));
         basic2, "basic2.slang" => Some(Atom::Num(5.0));
+        if1, "if.slang" => Some(Atom::Str("hello".to_string()));
+        if2, "else.slang" => Some(Atom::Str("goodbye".to_string()));
+        scope_modify, "scope_modify.slang" => Some(Atom::Num(2.0));
         error1, "error1.slang";
+        scope_typecheck, "scope_typecheck.slang";
     );
 }

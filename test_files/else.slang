@@ -1,6 +1,6 @@
 let res = ""
 
-if (1 == 1) {
+if ("hello" == "goodbye") {
     res = "hello"
 } else {
     res = "goodbye"

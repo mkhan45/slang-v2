@@ -1,7 +1,4 @@
-use crate::{
-    eval::{atom::Atom, eval_expr},
-    statement::*,
-};
+use crate::{eval::atom::Atom, statement::*};
 
 #[derive(Debug)]
 pub struct Block {
@@ -13,11 +10,13 @@ impl Block {
         Block { statements }
     }
 
-    pub fn execute(&mut self, scope: &mut State) -> Option<Atom> {
+    pub fn execute(&mut self, state: &mut State) -> Option<Atom> {
+        state.scopes.push(Scope::default());
         let mut res = None;
         self.statements.drain(..).for_each(|stmt| {
-            res = stmt.execute(scope);
+            res = stmt.execute(state);
         });
+        state.scopes.pop();
         res
     }
 }

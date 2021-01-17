@@ -8,7 +8,7 @@ pub fn eval_expr(expr: &S, state: &mut State) -> Atom {
     let mut eval = |expr: &S| eval_expr(expr, state);
     match expr {
         S::Atom(a) => match a {
-            Atom::Identifier(name) => match state.vars.get(name) {
+            Atom::Identifier(name) => match state.get_variable(name) {
                 Some(a) => a.clone(),
                 None => panic!("Variable {} undefined", name),
             },

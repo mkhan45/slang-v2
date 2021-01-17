@@ -18,10 +18,8 @@ mod eval;
 use statement::State;
 
 mod statement;
-use statement::Stmt;
 
 mod block;
-use block::Block;
 
 fn run(code: &str, state: &mut State) -> Result<Option<Atom>, Box<dyn Error>> {
     let tokens = scan_tokens(code);
