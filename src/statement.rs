@@ -76,26 +76,33 @@ pub struct Scope {
     pub vars: HashMap<String, Atom>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Declaration {
     pub lhs: String,
     pub rhs: S,
     pub alias: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct If {
     pub cond: S,
     pub then_block: Block,
     pub else_block: Block,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+pub struct While {
+    pub cond: S,
+    pub loop_block: Block,
+}
+
+#[derive(Debug, Clone)]
 pub enum Stmt {
     ExprStmt(S),
     PrintStmt(S),
     Dec(Declaration),
     IfStmt(If),
+    WhileStmt(While),
 }
 
 impl Stmt {
@@ -116,10 +123,21 @@ impl Stmt {
                     mut then_block,
                     mut else_block,
                 } = if_data;
+
                 if eval_expr(&cond, state) == Atom::Bool(true) {
-                    then_block.execute(state);
+                    then_block.execute(state)
                 } else {
-                    else_block.execute(state);
+                    else_block.execute(state)
+                }
+            }
+            Stmt::WhileStmt(while_data) => {
+                let While {
+                    cond,
+                    mut loop_block,
+                } = while_data;
+
+                while eval_expr(&cond, state) == Atom::Bool(true) {
+                    loop_block.execute(state);
                 }
                 None
             }
@@ -163,6 +181,7 @@ mod stmt_tests {
         if1, "if.slang" => Some(Atom::Str("hello".to_string()));
         if2, "else.slang" => Some(Atom::Str("goodbye".to_string()));
         scope_modify, "scope_modify.slang" => Some(Atom::Num(2.0));
+        while1, "while1.slang" => Some(Atom::Num(10.0));
         error1, "error1.slang";
         scope_typecheck, "scope_typecheck.slang";
     );

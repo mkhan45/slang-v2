@@ -102,6 +102,8 @@ fn token_recurse(source: &[char]) -> Vec<Token> {
         ['>', '=', xs @ ..] => recur(TokenType::GreaterEqual, xs),
         ['=', '=', xs @ ..] => recur(TokenType::Equal, xs),
         ['=', xs @ ..] => recur(TokenType::Assign, xs),
+        ['<', xs @ ..] => recur(TokenType::Less, xs),
+        ['>', xs @ ..] => recur(TokenType::Greater, xs),
         ['(', xs @ ..] => recur(TokenType::LParen, xs),
         [')', xs @ ..] => recur(TokenType::RParen, xs),
         ['{', xs @ ..] => recur(TokenType::LBrace, xs),

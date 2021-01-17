@@ -51,7 +51,12 @@ fn run_file(
     state: &mut State,
 ) -> Result<Option<Atom>, Box<dyn Error>> {
     let file = std::fs::read_to_string(path)?;
-    run(&file, state)
+    let res = run(&file, state)?;
+    if let Some(ref a) = res {
+        println!("{}", a);
+    }
+
+    Ok(res)
 }
 
 fn run_prompt(state: &mut State) -> Result<Option<Atom>, Box<dyn Error>> {

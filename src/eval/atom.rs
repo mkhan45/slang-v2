@@ -65,13 +65,25 @@ impl Div for Atom {
     }
 }
 
+impl std::cmp::PartialOrd for Atom {
+    fn partial_cmp(&self, rhs: &Self) -> Option<std::cmp::Ordering> {
+        match (self, rhs) {
+            (Atom::Str(_), Atom::Str(_)) => todo!(),
+            (Atom::Str(_), Atom::Num(_)) => todo!(),
+            (Atom::Num(_), Atom::Str(_)) => todo!(),
+            (Atom::Num(a), Atom::Num(b)) => a.partial_cmp(b),
+            _ => todo!(),
+        }
+    }
+}
+
 impl fmt::Display for Atom {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Atom::Str(s) => write!(f, "{}", s),
             Atom::Num(n) => write!(f, "{}", n),
             Atom::Bool(b) => write!(f, "{}", b),
-            _ => todo!(),
+            Atom::Identifier(name) => write!(f, "(Identifier {})", name),
         }
     }
 }

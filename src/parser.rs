@@ -12,23 +12,26 @@ use crate::block::Block;
 mod assignment_parse;
 mod ident_parse;
 mod if_parse;
+mod while_parse;
 
 // https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum S {
     Atom(Atom),
     Cons(Op, Vec<S>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Op {
     Plus,
     Minus,
     Negate,
     Multiply,
     Divide,
+    Less,
     Equal,
+    Greater,
     NotEqual,
 }
 
@@ -43,7 +46,9 @@ impl fmt::Display for Op {
                 Op::Minus => "-",
                 Op::Multiply => "*",
                 Op::Divide => "/",
+                Op::Less => "<",
                 Op::Equal => "==",
+                Op::Greater => ">",
                 Op::NotEqual => "!=",
             }
         )
@@ -65,6 +70,7 @@ impl fmt::Display for S {
     }
 }
 
+#[derive(Clone)]
 pub struct Lexer {
     tokens: Vec<Token>,
 }
@@ -102,14 +108,14 @@ pub fn parse_block(lexer: &mut Lexer) -> Block {
         if lexer.is_empty() || lexer.peek().ty == TokenType::RBrace {
             None
         } else {
-            Some(parse_stmt(lexer))
+            parse_stmt(lexer)
         }
     };
 
     Block::new(std::iter::from_fn(add_stmt).collect())
 }
 
-pub fn parse_stmt(lexer: &mut Lexer) -> Stmt {
+pub fn parse_stmt(lexer: &mut Lexer) -> Option<Stmt> {
     match lexer.peek() {
         Token {
             ty: TokenType::NewLine,
@@ -119,6 +125,12 @@ pub fn parse_stmt(lexer: &mut Lexer) -> Stmt {
             parse_stmt(lexer)
         }
         Token {
+            ty: TokenType::RBrace,
+            ..
+        } => {
+            None
+        }
+        Token {
             ty: TokenType::Print,
             ..
         } => {
@@ -126,27 +138,35 @@ pub fn parse_stmt(lexer: &mut Lexer) -> Stmt {
             assert_eq!(lexer.next().ty, TokenType::LParen);
             let res = Stmt::PrintStmt(parse_expr(lexer));
             assert_eq!(lexer.next().ty, TokenType::RParen);
-            assert_eq!(lexer.next().ty, TokenType::NewLine);
-            res
+            assert!({
+                let next_ty = lexer.next().ty;
+                next_ty == TokenType::NewLine || next_ty == TokenType::EOF
+            });
+            Some(res)
         }
         Token {
             ty: TokenType::Let, ..
         } => {
             lexer.next();
-            Stmt::Dec(assignment_parse::parse_assignment(lexer))
+            Some(Stmt::Dec(assignment_parse::parse_assignment(lexer)))
         }
         Token {
             ty: TokenType::Identifier,
             ..
         } => {
-            ident_parse::parse_ident(lexer)
+            Some(ident_parse::parse_ident(lexer))
         }
         Token {
             ty: TokenType::If, ..
         } => {
-            Stmt::IfStmt(if_parse::parse_if(lexer))
+            Some(Stmt::IfStmt(if_parse::parse_if(lexer)))
         }
-        _t => Stmt::ExprStmt(parse_expr(lexer)),
+        Token {
+            ty: TokenType::While, ..
+        } => {
+            Some(Stmt::WhileStmt(while_parse::parse_while(lexer)))
+        }
+        _t => Some(Stmt::ExprStmt(parse_expr(lexer)))
     }
 }
 
@@ -188,7 +208,6 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
         let nx = lexer.peek();
         let op = match nx.ty {
             TokenType::EOF | TokenType::NewLine => {
-                lexer.next();
                 break;
             }
             TokenType::Plus => Op::Plus,
@@ -197,14 +216,16 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
             TokenType::Star => Op::Multiply,
             TokenType::Bang => Op::Negate,
             TokenType::Equal => Op::Equal,
+            TokenType::Less => Op::Less,
+            TokenType::Greater => Op::Greater,
             TokenType::BangEqual => Op::NotEqual,
-            TokenType::RParen => {
+            TokenType::RParen | TokenType::RBrace => {
                 // if paren_depth < 1 {
                 //     panic!("Unbalanced right parenthesis");
                 // }
                 break;
             }
-            _ => unimplemented!(), // could be panic
+            t => unimplemented!("Operator: {:?}, lhs: {:?}", t, lhs), // could be panic
         };
 
         let (l_bp, r_bp) = infix_binding_power(&op);
@@ -225,7 +246,7 @@ fn infix_binding_power(op: &Op) -> (u8, u8) {
     match op {
         Op::Plus | Op::Minus => (1, 2),
         Op::Multiply | Op::Divide => (3, 4),
-        Op::Equal | Op::NotEqual => (0, 1),
+        Op::Equal | Op::NotEqual | Op::Less | Op::Greater => (0, 1),
         _ => panic!("bad op {:?}", op),
     }
 }
