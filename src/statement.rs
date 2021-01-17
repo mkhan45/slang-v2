@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
 use crate::{
+    block::Block,
     eval::{atom::Atom, eval_expr},
     parser::*,
 };
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct State {
     pub vars: HashMap<String, Atom>,
 }
@@ -50,10 +51,18 @@ pub struct Declaration {
 }
 
 #[derive(Debug)]
+pub struct If {
+    pub cond: S,
+    pub then_block: Block,
+    pub else_block: Block,
+}
+
+#[derive(Debug)]
 pub enum Stmt {
     ExprStmt(S),
     PrintStmt(S),
     Dec(Declaration),
+    IfStmt(If),
 }
 
 impl Stmt {
@@ -66,6 +75,19 @@ impl Stmt {
             }
             Stmt::Dec(dec) => {
                 state.declare(dec);
+                None
+            }
+            Stmt::IfStmt(if_data) => {
+                let If {
+                    cond,
+                    mut then_block,
+                    mut else_block,
+                } = if_data;
+                if eval_expr(&cond, state) == Atom::Bool(true) {
+                    then_block.execute(state);
+                } else {
+                    else_block.execute(state);
+                }
                 None
             }
         }

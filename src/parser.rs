@@ -2,10 +2,12 @@ use std::fmt;
 
 use crate::{
     scanner::token::*,
-    statement::{Declaration, Stmt},
+    statement::{Declaration, If, Stmt},
 };
 
 use crate::eval::atom::Atom;
+
+use crate::block::Block;
 
 // https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 
@@ -22,6 +24,8 @@ pub enum Op {
     Negate,
     Multiply,
     Divide,
+    Equal,
+    NotEqual,
 }
 
 impl fmt::Display for Op {
@@ -35,6 +39,8 @@ impl fmt::Display for Op {
                 Op::Minus => "-",
                 Op::Multiply => "*",
                 Op::Divide => "/",
+                Op::Equal => "==",
+                Op::NotEqual => "!=",
             }
         )
     }
@@ -85,6 +91,18 @@ impl Lexer {
     pub fn prepend(&mut self, token: Token) {
         self.tokens.push(token);
     }
+}
+
+pub fn parse_block(lexer: &mut Lexer) -> Block {
+    let add_stmt = || {
+        if lexer.is_empty() || lexer.peek().ty == TokenType::RBrace {
+            None
+        } else {
+            Some(parse_stmt(lexer))
+        }
+    };
+
+    Block::new(std::iter::from_fn(add_stmt).collect())
 }
 
 pub fn parse_stmt(lexer: &mut Lexer) -> Stmt {
@@ -145,6 +163,35 @@ pub fn parse_stmt(lexer: &mut Lexer) -> Stmt {
                 Stmt::ExprStmt(parse_expr(lexer))
             }
         }
+        Token {
+            ty: TokenType::If, ..
+        } => {
+            lexer.next();
+            assert_eq!(lexer.next().ty, TokenType::LParen);
+            let cond = parse_expr(lexer);
+            assert_eq!(lexer.next().ty, TokenType::RParen);
+            assert_eq!(lexer.next().ty, TokenType::LBrace);
+            let then_block = parse_block(lexer);
+            assert_eq!(lexer.next().ty, TokenType::RBrace);
+            if lexer.peek().ty == TokenType::Else {
+                lexer.next();
+                assert_eq!(lexer.next().ty, TokenType::LBrace);
+                let else_block = parse_block(lexer);
+                assert_eq!(lexer.next().ty, TokenType::RBrace);
+                Stmt::IfStmt(If {
+                    cond,
+                    then_block,
+                    else_block,
+                })
+            } else {
+                let else_block = Block::new(Vec::with_capacity(0));
+                Stmt::IfStmt(If {
+                    cond,
+                    then_block,
+                    else_block,
+                })
+            }
+        }
         _t => Stmt::ExprStmt(parse_expr(lexer)),
     }
 }
@@ -195,6 +242,8 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
             TokenType::Slash => Op::Divide,
             TokenType::Star => Op::Multiply,
             TokenType::Bang => Op::Negate,
+            TokenType::Equal => Op::Equal,
+            TokenType::BangEqual => Op::NotEqual,
             TokenType::RParen => {
                 // if paren_depth < 1 {
                 //     panic!("Unbalanced right parenthesis");
@@ -222,6 +271,7 @@ fn infix_binding_power(op: &Op) -> (u8, u8) {
     match op {
         Op::Plus | Op::Minus => (1, 2),
         Op::Multiply | Op::Divide => (3, 4),
+        Op::Equal | Op::NotEqual => (0, 1),
         _ => panic!("bad op {:?}", op),
     }
 }

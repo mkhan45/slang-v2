@@ -23,6 +23,7 @@ pub fn eval_expr(expr: &S, state: &mut State) -> Atom {
                 (Op::Multiply, [a, b, ..]) => eval(&a) * eval(&b),
                 (Op::Divide, [a, b, ..]) => eval(&a) / eval(&b),
                 (Op::Negate, [_a]) => todo!(),
+                (Op::Equal, [a, b]) => Atom::Bool(eval(&a) == (eval(&b))),
                 _ => panic!("invalid expr: {}", expr),
             }
         }

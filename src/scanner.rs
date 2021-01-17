@@ -6,14 +6,27 @@ use crate::eval::atom::Atom;
 use itertools::Itertools;
 
 fn skip_comment(source: &[char]) -> Vec<char> {
-    source.iter().skip_while(|&&c| c != '\n' && c != '\r').copied().collect_vec()
+    source
+        .iter()
+        .skip_while(|&&c| c != '\n' && c != '\r')
+        .copied()
+        .collect_vec()
 }
 
 fn string_token(source: &[char]) -> Vec<Token> {
     let cond = |&&c: &&char| c != '\"';
     let s: String = source.iter().take_while(cond).collect();
-    let remaining = source.iter().skip_while(cond).skip(1).copied().collect_vec();
-    [vec![Token::new(TokenType::Literal(Atom::Str(s.clone())), s, 0)], token_recurse(&remaining)].concat()
+    let remaining = source
+        .iter()
+        .skip_while(cond)
+        .skip(1)
+        .copied()
+        .collect_vec();
+    [
+        vec![Token::new(TokenType::Literal(Atom::Str(s.clone())), s, 0)],
+        token_recurse(&remaining),
+    ]
+    .concat()
 }
 
 fn num_token(source: &[char]) -> Vec<Token> {
@@ -43,7 +56,11 @@ fn ident_token(source: &[char]) -> Vec<Token> {
     }
 
     let lex: String = source.iter().take_while(is_ident_char).collect();
-    let remaining = source.iter().skip_while(is_ident_char).copied().collect_vec();
+    let remaining = source
+        .iter()
+        .skip_while(is_ident_char)
+        .copied()
+        .collect_vec();
     macro_rules! add_lexemes {
         ( $($lex:expr => $ty:expr),* ) => {
             match lex.as_str() {
@@ -78,28 +95,28 @@ fn token_recurse(source: &[char]) -> Vec<Token> {
     match &source {
         [] | ['\n' | '\r'] => vec![],
         ['#', ..] => token_recurse(skip_comment(source).as_slice()),
-        ['\n' | '\r', xs@..] => recur(TokenType::NewLine, xs),
-        ['+', '=', xs@..] => recur(TokenType::PlusAssign, xs),
-        ['!', '=', xs@..] => recur(TokenType::BangEqual, xs),
-        ['<', '=', xs@..] => recur(TokenType::LessEqual, xs),
-        ['>', '=', xs@..] => recur(TokenType::GreaterEqual, xs),
-        ['=', '=', xs@..] => recur(TokenType::Equal, xs),
-        ['=', xs@..] => recur(TokenType::Assign, xs),
-        ['(', xs@..] => recur(TokenType::LParen, xs),
-        [')', xs@..] => recur(TokenType::RParen, xs),
-        ['{', xs@..] => recur(TokenType::LBrace, xs),
-        ['}', xs@..] => recur(TokenType::RBrace, xs),
-        [',', xs@..] => recur(TokenType::Comma, xs),
-        ['*', xs@..] => recur(TokenType::Star, xs),
-        ['/', xs@..] => recur(TokenType::Slash, xs),
-        ['-', xs@..] => recur(TokenType::Minus, xs),
-        ['+', xs@..] => recur(TokenType::Plus, xs),
-        ['.', xs@..] => recur(TokenType::Dot, xs),
-        ['\"', xs@..] => string_token(xs),
-        ls@[c, ..] if c.is_numeric() => num_token(ls),
-        ls@[c, ..] if c.is_alphabetic() => ident_token(ls),
-        [c, xs@..] if c.is_whitespace() => token_recurse(xs),
-        c@_ => panic!("Invalid input {:?}", c),
+        ['\n' | '\r', xs @ ..] => recur(TokenType::NewLine, xs),
+        ['+', '=', xs @ ..] => recur(TokenType::PlusAssign, xs),
+        ['!', '=', xs @ ..] => recur(TokenType::BangEqual, xs),
+        ['<', '=', xs @ ..] => recur(TokenType::LessEqual, xs),
+        ['>', '=', xs @ ..] => recur(TokenType::GreaterEqual, xs),
+        ['=', '=', xs @ ..] => recur(TokenType::Equal, xs),
+        ['=', xs @ ..] => recur(TokenType::Assign, xs),
+        ['(', xs @ ..] => recur(TokenType::LParen, xs),
+        [')', xs @ ..] => recur(TokenType::RParen, xs),
+        ['{', xs @ ..] => recur(TokenType::LBrace, xs),
+        ['}', xs @ ..] => recur(TokenType::RBrace, xs),
+        [',', xs @ ..] => recur(TokenType::Comma, xs),
+        ['*', xs @ ..] => recur(TokenType::Star, xs),
+        ['/', xs @ ..] => recur(TokenType::Slash, xs),
+        ['-', xs @ ..] => recur(TokenType::Minus, xs),
+        ['+', xs @ ..] => recur(TokenType::Plus, xs),
+        ['.', xs @ ..] => recur(TokenType::Dot, xs),
+        ['\"', xs @ ..] => string_token(xs),
+        ls @ [c, ..] if c.is_numeric() => num_token(ls),
+        ls @ [c, ..] if c.is_alphabetic() => ident_token(ls),
+        [c, xs @ ..] if c.is_whitespace() => token_recurse(xs),
+        c @ _ => panic!("Invalid input {:?}", c),
     }
 }
 

@@ -5,6 +5,7 @@ use std::ops::{Add, Div, Mul, Sub};
 pub enum Atom {
     Str(String),
     Num(f32),
+    Bool(bool),
     Identifier(String),
 }
 
@@ -69,6 +70,7 @@ impl fmt::Display for Atom {
         match self {
             Atom::Str(s) => write!(f, "{}", s),
             Atom::Num(n) => write!(f, "{}", n),
+            Atom::Bool(b) => write!(f, "{}", b),
             _ => todo!(),
         }
     }

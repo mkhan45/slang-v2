@@ -18,6 +18,10 @@ mod eval;
 use statement::State;
 
 mod statement;
+use statement::Stmt;
+
+mod block;
+use block::Block;
 
 fn run(code: &str, state: &mut State) -> Result<Option<Atom>, Box<dyn Error>> {
     let tokens = scan_tokens(code);
@@ -37,18 +41,8 @@ fn run(code: &str, state: &mut State) -> Result<Option<Atom>, Box<dyn Error>> {
         // println!("{}", &expr);
         // println!("{}", eval_expr(&expr));
 
-        let add_stmt = move || {
-            if lexer.is_empty() {
-                None
-            } else {
-                Some(parse_stmt(&mut lexer))
-            }
-        };
-
-        let mut res = None;
-        std::iter::from_fn(add_stmt).for_each(|stmt| {
-            res = stmt.execute(state);
-        });
+        let mut main_block = parse_block(&mut lexer);
+        let res = main_block.execute(state);
 
         Ok(res)
     }
