@@ -96,4 +96,25 @@ impl Atom {
             _ => todo!(),
         }
     }
+
+    pub fn modulus(&self, rhs: &Atom) -> Atom {
+        match (self, rhs) {
+            (Atom::Num(a), Atom::Num(b)) => Atom::Num(a % b),
+            _ => todo!(),
+        }
+    }
+
+    pub fn and(&self, rhs: &Atom) -> Atom {
+        match (self, rhs) {
+            (Atom::Bool(a), Atom::Bool(b)) => Atom::Bool(*a && *b),
+            _ => todo!(),
+        }
+    }
+
+    pub fn or(&self, rhs: &Atom) -> Atom {
+        match (self, rhs) {
+            (Atom::Bool(a), Atom::Bool(b)) => Atom::Bool(*a || *b),
+            _ => todo!(),
+        }
+    }
 }

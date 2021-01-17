@@ -25,7 +25,9 @@ pub enum S {
 #[derive(Debug, Clone)]
 pub enum Op {
     Plus,
+    PlusAssign,
     Minus,
+    MinusAssign,
     Negate,
     Multiply,
     Divide,
@@ -33,6 +35,9 @@ pub enum Op {
     Equal,
     Greater,
     NotEqual,
+    Mod,
+    And,
+    Or,
 }
 
 impl fmt::Display for Op {
@@ -43,13 +48,18 @@ impl fmt::Display for Op {
             match self {
                 Op::Negate => "!",
                 Op::Plus => "+",
+                Op::PlusAssign => "+=",
                 Op::Minus => "-",
+                Op::MinusAssign => "-=",
                 Op::Multiply => "*",
                 Op::Divide => "/",
                 Op::Less => "<",
                 Op::Equal => "==",
                 Op::Greater => ">",
                 Op::NotEqual => "!=",
+                Op::Mod => "%",
+                Op::And => "&&",
+                Op::Or => "||",
             }
         )
     }
@@ -211,7 +221,9 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
                 break;
             }
             TokenType::Plus => Op::Plus,
+            TokenType::PlusAssign => Op::PlusAssign,
             TokenType::Minus => Op::Minus,
+            TokenType::MinusAssign => Op::MinusAssign,
             TokenType::Slash => Op::Divide,
             TokenType::Star => Op::Multiply,
             TokenType::Bang => Op::Negate,
@@ -219,6 +231,9 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
             TokenType::Less => Op::Less,
             TokenType::Greater => Op::Greater,
             TokenType::BangEqual => Op::NotEqual,
+            TokenType::Percent => Op::Mod,
+            TokenType::And => Op::And,
+            TokenType::Or => Op::Or,
             TokenType::RParen | TokenType::RBrace => {
                 // if paren_depth < 1 {
                 //     panic!("Unbalanced right parenthesis");
@@ -244,8 +259,10 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
 
 fn infix_binding_power(op: &Op) -> (u8, u8) {
     match op {
-        Op::Plus | Op::Minus => (1, 2),
-        Op::Multiply | Op::Divide => (3, 4),
+        Op::Plus | Op::Minus => (4, 5),
+        Op::Multiply | Op::Divide => (6, 7),
+        Op::Mod => (2, 3),
+        Op::And | Op::Or => (1, 2),
         Op::Equal | Op::NotEqual | Op::Less | Op::Greater => (0, 1),
         _ => panic!("bad op {:?}", op),
     }

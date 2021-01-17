@@ -18,6 +18,7 @@ pub enum TokenType {
     MinusAssign,
     Slash,
     Star,
+    Percent,
     Bang,
     BangEqual,
     Equal,

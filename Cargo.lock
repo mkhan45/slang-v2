@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "lox-treewalk"
+name = "slang-treewalk"
 version = "0.1.0"
 dependencies = [
  "itertools",

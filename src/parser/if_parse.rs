@@ -4,20 +4,15 @@ pub fn parse_if(lexer: &mut Lexer) -> If {
     lexer.next();
     assert_eq!(lexer.next().ty, TokenType::LParen);
     let cond = parse_expr(lexer);
-    dbg!();
     assert_eq!(lexer.next().ty, TokenType::RParen);
     assert_eq!(lexer.next().ty, TokenType::LBrace);
-    dbg!();
     let then_block = parse_block(lexer);
     assert_eq!(lexer.next().ty, TokenType::RBrace);
-    dbg!();
     if lexer.peek().ty == TokenType::Else {
         lexer.next();
-        dbg!();
         assert_eq!(lexer.next().ty, TokenType::LBrace);
         let else_block = parse_block(lexer);
         assert_eq!(lexer.next().ty, TokenType::RBrace);
-        dbg!();
         If {
             cond,
             then_block,

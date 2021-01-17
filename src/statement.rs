@@ -37,14 +37,20 @@ impl State {
     }
 
     pub fn declare(&mut self, dec: Declaration) {
-        let disc = {
+        let (val, disc) = {
             let var = self.get_variable(&dec.lhs);
-            var.map(std::mem::discriminant)
+            (var.cloned(), var.map(std::mem::discriminant))
         };
 
         match (disc, dec.alias) {
             (Some(d), alias) => {
-                let new_val = eval_expr(&dec.rhs, self);
+                let rhs_val = eval_expr(&dec.rhs, self);
+                let new_val = match dec.plus_or_minus {
+                    Some(true) => val.unwrap() + rhs_val,
+                    Some(false) => val.unwrap() - rhs_val,
+                    None => rhs_val,
+                };
+
                 if d == std::mem::discriminant(&&new_val) || alias {
                     self.modify_variable(&dec.lhs, new_val);
                 } else {
@@ -81,6 +87,7 @@ pub struct Declaration {
     pub lhs: String,
     pub rhs: S,
     pub alias: bool,
+    pub plus_or_minus: Option<bool>,
 }
 
 #[derive(Debug, Clone)]
