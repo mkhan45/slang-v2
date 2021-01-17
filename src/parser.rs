@@ -2,12 +2,16 @@ use std::fmt;
 
 use crate::{
     scanner::token::*,
-    statement::{Declaration, If, Stmt},
+    statement::Stmt,
 };
 
 use crate::eval::atom::Atom;
 
 use crate::block::Block;
+
+mod assignment_parse;
+mod ident_parse;
+mod if_parse;
 
 // https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 
@@ -129,68 +133,18 @@ pub fn parse_stmt(lexer: &mut Lexer) -> Stmt {
             ty: TokenType::Let, ..
         } => {
             lexer.next();
-            if let Token {
-                ty: TokenType::Identifier,
-                lexeme: name,
-                ..
-            } = lexer.next()
-            {
-                assert_eq!(lexer.next().ty, TokenType::Assign);
-                Stmt::Dec(Declaration {
-                    lhs: name,
-                    rhs: parse_expr(lexer),
-                    alias: true,
-                })
-            } else {
-                panic!();
-            }
+            Stmt::Dec(assignment_parse::parse_assignment(lexer))
         }
         Token {
             ty: TokenType::Identifier,
-            lexeme: name,
             ..
         } => {
-            let nx = lexer.next();
-            if lexer.peek().ty == TokenType::Assign {
-                lexer.next();
-                Stmt::Dec(Declaration {
-                    lhs: name,
-                    rhs: parse_expr(lexer),
-                    alias: false,
-                })
-            } else {
-                lexer.prepend(nx);
-                Stmt::ExprStmt(parse_expr(lexer))
-            }
+            ident_parse::parse_ident(lexer)
         }
         Token {
             ty: TokenType::If, ..
         } => {
-            lexer.next();
-            assert_eq!(lexer.next().ty, TokenType::LParen);
-            let cond = parse_expr(lexer);
-            assert_eq!(lexer.next().ty, TokenType::RParen);
-            assert_eq!(lexer.next().ty, TokenType::LBrace);
-            let then_block = parse_block(lexer);
-            assert_eq!(lexer.next().ty, TokenType::RBrace);
-            if lexer.peek().ty == TokenType::Else {
-                lexer.next();
-                assert_eq!(lexer.next().ty, TokenType::LBrace);
-                let else_block = parse_block(lexer);
-                assert_eq!(lexer.next().ty, TokenType::RBrace);
-                Stmt::IfStmt(If {
-                    cond,
-                    then_block,
-                    else_block,
-                })
-            } else {
-                let else_block = Block::new(Vec::with_capacity(0));
-                Stmt::IfStmt(If {
-                    cond,
-                    then_block,
-                    else_block,
-                })
-            }
+            Stmt::IfStmt(if_parse::parse_if(lexer))
         }
         _t => Stmt::ExprStmt(parse_expr(lexer)),
     }
