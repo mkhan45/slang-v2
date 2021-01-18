@@ -27,7 +27,7 @@ impl State {
             .find_map(|scope| scope.vars.get(var))
     }
 
-    fn modify_variable(&mut self, var: &String, val: Atom) {
+    pub fn modify_variable(&mut self, var: &String, val: Atom) {
         for scope in &mut self.scopes {
             if scope.vars.contains_key(var) {
                 scope.vars.insert(var.to_string(), val);
@@ -147,7 +147,7 @@ impl Stmt {
 
                 while eval_expr(&cond, state) == Atom::Bool(true) {
                     let res = loop_block.execute(state);
-                    if Some(Atom::Break) == res  {
+                    if Some(Atom::Break) == res {
                         break;
                     }
                 }
@@ -196,6 +196,8 @@ mod stmt_tests {
         if2, "else.slang" => Some(Atom::Str("goodbye".to_string()));
         scope_modify, "scope_modify.slang" => Some(Atom::Num(2.0));
         while1, "while1.slang" => Some(Atom::Num(10.0));
+        for1, "for1.slang" => Some(Atom::Num(1053.0));
+        fn1, "fn1.slang" => Some(Atom::Num(120.0));
         euler01, "project_euler_01.slang" => Some(Atom::Num(233168.0));
         euler02, "project_euler_02.slang" => Some(Atom::Num(4613732.0));
         error1, "error1.slang";

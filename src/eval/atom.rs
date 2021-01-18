@@ -1,5 +1,8 @@
+use crate::block::Block;
 use std::fmt;
 use std::ops::{Add, Div, Mul, Sub};
+
+use crate::parser::S;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Atom {
@@ -7,6 +10,8 @@ pub enum Atom {
     Num(f64),
     Bool(bool),
     Identifier(String),
+    FnCall(FunctionCall),
+    Function(FunctionData),
     Break,
 }
 
@@ -86,6 +91,8 @@ impl fmt::Display for Atom {
             Atom::Bool(b) => write!(f, "{}", b),
             Atom::Identifier(name) => write!(f, "(Identifier {})", name),
             Atom::Break => write!(f, "Break"),
+            Atom::FnCall(FunctionCall { name, args }) => write!(f, "{}({:?})", name, args),
+            Atom::Function(_) => write!(f, "FunctionData"),
         }
     }
 }
@@ -118,5 +125,30 @@ impl Atom {
             (Atom::Bool(a), Atom::Bool(b)) => Atom::Bool(*a || *b),
             _ => todo!(),
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct FunctionCall {
+    pub name: String,
+    pub args: Vec<S>,
+}
+
+impl PartialEq for FunctionCall {
+    fn eq(&self, _rhs: &Self) -> bool {
+        false
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct FunctionData {
+    pub arg_names: Vec<String>,
+    pub fn_block: Block,
+}
+
+impl PartialEq for FunctionData {
+    fn eq(&self, _rhs: &Self) -> bool {
+        //TODO: idk but this should probably return true sometimes
+        false
     }
 }

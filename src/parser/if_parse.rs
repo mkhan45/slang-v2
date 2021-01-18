@@ -1,4 +1,4 @@
-use crate::{parse_block, parse_expr, statement::If, TokenType, Lexer, block::Block};
+use crate::{block::Block, parse_block, parse_expr, statement::If, Lexer, TokenType};
 
 pub fn parse_if(lexer: &mut Lexer) -> If {
     lexer.next();

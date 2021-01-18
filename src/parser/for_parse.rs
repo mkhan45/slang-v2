@@ -1,7 +1,7 @@
-use crate::Atom;
 use crate::statement::Stmt;
+use crate::Atom;
 use crate::{block::Block, parse_stmt};
-use crate::{parse_block, parse_expr, statement::While, TokenType, Lexer};
+use crate::{parse_block, parse_expr, statement::While, Lexer, TokenType};
 
 use super::S;
 

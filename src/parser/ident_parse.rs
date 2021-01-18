@@ -1,9 +1,19 @@
-use crate::{parse_expr, statement::{Declaration, Stmt}, TokenType, Lexer};
+use crate::{
+    parse_expr,
+    statement::{Declaration, Stmt},
+    Lexer, TokenType,
+};
 
 pub fn parse_ident(lexer: &mut Lexer) -> Stmt {
     let nx = lexer.next();
 
-    if [TokenType::Assign, TokenType::MinusAssign, TokenType::PlusAssign].contains(&lexer.peek().ty) {
+    if [
+        TokenType::Assign,
+        TokenType::MinusAssign,
+        TokenType::PlusAssign,
+    ]
+    .contains(&lexer.peek().ty)
+    {
         let plus_or_minus = match lexer.peek().ty {
             TokenType::Assign => None,
             TokenType::PlusAssign => Some(true),

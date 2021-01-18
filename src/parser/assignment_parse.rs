@@ -1,4 +1,4 @@
-use crate::{parse_expr, statement::Declaration, Token, TokenType, Lexer};
+use crate::{parse_expr, statement::Declaration, Lexer, Token, TokenType};
 
 pub fn parse_assignment(lexer: &mut Lexer) -> Declaration {
     if let Token {

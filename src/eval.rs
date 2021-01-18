@@ -4,6 +4,8 @@ use crate::State;
 pub mod atom;
 use atom::Atom;
 
+mod function;
+
 pub fn eval_expr(expr: &S, state: &mut State) -> Atom {
     let mut eval = |expr: &S| eval_expr(expr, state);
     match expr {
@@ -12,6 +14,7 @@ pub fn eval_expr(expr: &S, state: &mut State) -> Atom {
                 Some(a) => a.clone(),
                 None => panic!("Variable {} undefined in state {:?}", name, state),
             },
+            Atom::FnCall(f) => function::eval_function_call(f, state).unwrap(),
             _ => a.clone(),
         },
         S::Cons(op, xs) => {

@@ -86,6 +86,27 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut top_state = State::default();
 
+    {
+        use crate::block::Block;
+        use crate::eval::atom::FunctionData;
+        use crate::statement::{Declaration, Stmt};
+        top_state.declare(Declaration {
+            lhs: "mul".to_string(),
+            rhs: S::Atom(Atom::Function(FunctionData {
+                arg_names: vec!["x".to_string(), "y".to_string()],
+                fn_block: Block::new(vec![Stmt::ExprStmt(S::Cons(
+                            Op::Multiply,
+                            vec![
+                            S::Atom(Atom::Identifier("x".to_string())),
+                            S::Atom(Atom::Identifier("y".to_string())),
+                            ],
+                ))]),
+            })),
+            alias: true,
+            plus_or_minus: None,
+        });
+    }
+
     match args.len() {
         0 | 1 => run_prompt(&mut top_state),
         2 => run_file(args[1].clone(), &mut top_state),

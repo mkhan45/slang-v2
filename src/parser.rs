@@ -1,19 +1,19 @@
+use crate::statement::Declaration;
+use crate::eval::atom::FunctionCall;
 use std::fmt;
 
-use crate::{
-    scanner::token::*,
-    statement::Stmt,
-};
+use crate::{scanner::token::*, statement::Stmt};
 
 use crate::eval::atom::Atom;
 
 use crate::block::Block;
 
 mod assignment_parse;
+mod fn_parse;
+mod for_parse;
 mod ident_parse;
 mod if_parse;
 mod while_parse;
-mod for_parse;
 
 // https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 
@@ -147,9 +147,7 @@ pub fn parse_stmt(lexer: &mut Lexer) -> Option<Stmt> {
         Token {
             ty: TokenType::RBrace,
             ..
-        } => {
-            None
-        }
+        } => None,
         Token {
             ty: TokenType::Print,
             ..
@@ -173,31 +171,37 @@ pub fn parse_stmt(lexer: &mut Lexer) -> Option<Stmt> {
         Token {
             ty: TokenType::Identifier,
             ..
-        } => {
-            Some(ident_parse::parse_ident(lexer))
-        }
+        } => Some(ident_parse::parse_ident(lexer)),
         Token {
             ty: TokenType::If, ..
-        } => {
-            Some(Stmt::IfStmt(if_parse::parse_if(lexer)))
-        }
+        } => Some(Stmt::IfStmt(if_parse::parse_if(lexer))),
         Token {
-            ty: TokenType::While, ..
-        } => {
-            Some(Stmt::WhileStmt(while_parse::parse_while(lexer)))
-        }
+            ty: TokenType::While,
+            ..
+        } => Some(Stmt::WhileStmt(while_parse::parse_while(lexer))),
         Token {
             ty: TokenType::For, ..
-        } => {
-            Some(for_parse::parse_for(lexer))
-        }
+        } => Some(for_parse::parse_for(lexer)),
         Token {
-            ty: TokenType::Break, ..
+            ty: TokenType::Break,
+            ..
         } => {
             lexer.next();
             Some(Stmt::Break)
         }
-        _t => Some(Stmt::ExprStmt(parse_expr(lexer)))
+        Token {
+            ty: TokenType::Function,
+            ..
+        } => {
+            let (fn_name, fn_data) = fn_parse::parse_fn_dec(lexer);
+            Some(Stmt::Dec(Declaration {
+                lhs: fn_name,
+                rhs: S::Atom(Atom::Function(fn_data)),
+                alias: true,
+                plus_or_minus: None,
+            }))
+        }
+        _t => Some(Stmt::ExprStmt(parse_expr(lexer))),
     }
 }
 
@@ -213,7 +217,16 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
     let nx = lexer.next();
     let mut lhs = match nx.ty {
         TokenType::Literal(a) => S::Atom(a),
-        TokenType::Identifier => S::Atom(Atom::Identifier(nx.lexeme)),
+        TokenType::Identifier => match lexer.peek().ty {
+            TokenType::LParen => {
+                let args = fn_parse::parse_fn_call_args(lexer);
+                S::Atom(Atom::FnCall(FunctionCall {
+                    name: nx.lexeme,
+                    args,
+                }))
+            }
+            _ => S::Atom(Atom::Identifier(nx.lexeme)),
+        },
         t if is_prefix_op(&t) => {
             let op = match t {
                 TokenType::Minus => Op::Minus,
@@ -238,7 +251,7 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
     loop {
         let nx = lexer.peek();
         let op = match nx.ty {
-            TokenType::EOF | TokenType::NewLine | TokenType::Semicolon => {
+            TokenType::EOF | TokenType::NewLine | TokenType::Semicolon | TokenType::Comma => {
                 break;
             }
             TokenType::Plus => Op::Plus,
