@@ -1,4 +1,4 @@
-# crafting_interpreters
+# slang
 
 Writing a rust interpreter using https://craftinginterpreters.com/
 

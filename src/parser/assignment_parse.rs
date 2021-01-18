@@ -12,7 +12,7 @@ pub fn parse_assignment(lexer: &mut Lexer) -> Declaration {
             lhs: name,
             rhs: parse_expr(lexer),
             alias: true,
-            plus_or_minus: Some(false),
+            plus_or_minus: None,
         }
     } else {
         panic!("error on parsing assignment");

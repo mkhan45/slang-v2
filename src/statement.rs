@@ -110,6 +110,7 @@ pub enum Stmt {
     Dec(Declaration),
     IfStmt(If),
     WhileStmt(While),
+    Block(Block),
 }
 
 impl Stmt {
@@ -148,6 +149,7 @@ impl Stmt {
                 }
                 None
             }
+            Stmt::Block(mut b) => b.execute(state),
         }
     }
 }
@@ -190,6 +192,7 @@ mod stmt_tests {
         scope_modify, "scope_modify.slang" => Some(Atom::Num(2.0));
         while1, "while1.slang" => Some(Atom::Num(10.0));
         euler01, "project_euler_01.slang" => Some(Atom::Num(233168.0));
+        euler02, "project_euler_02.slang" => Some(Atom::Num(4613732.0));
         error1, "error1.slang";
         scope_typecheck, "scope_typecheck.slang";
     );

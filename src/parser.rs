@@ -115,7 +115,7 @@ impl Lexer {
 
 pub fn parse_block(lexer: &mut Lexer) -> Block {
     let add_stmt = || {
-        if lexer.is_empty() || lexer.peek().ty == TokenType::RBrace {
+        if lexer.is_empty() {
             None
         } else {
             parse_stmt(lexer)
@@ -133,6 +133,15 @@ pub fn parse_stmt(lexer: &mut Lexer) -> Option<Stmt> {
         } => {
             lexer.next();
             parse_stmt(lexer)
+        }
+        Token {
+            ty: TokenType::LBrace,
+            ..
+        } => {
+            lexer.next();
+            let block = Some(Stmt::Block(parse_block(lexer)));
+            assert_eq!(lexer.next().ty, TokenType::RBrace);
+            block
         }
         Token {
             ty: TokenType::RBrace,
