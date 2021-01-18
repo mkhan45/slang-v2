@@ -4,9 +4,10 @@ use std::ops::{Add, Div, Mul, Sub};
 #[derive(Debug, Clone, PartialEq)]
 pub enum Atom {
     Str(String),
-    Num(f32),
+    Num(f64),
     Bool(bool),
     Identifier(String),
+    Break,
 }
 
 impl Add for Atom {
@@ -84,6 +85,7 @@ impl fmt::Display for Atom {
             Atom::Num(n) => write!(f, "{}", n),
             Atom::Bool(b) => write!(f, "{}", b),
             Atom::Identifier(name) => write!(f, "(Identifier {})", name),
+            Atom::Break => write!(f, "Break"),
         }
     }
 }

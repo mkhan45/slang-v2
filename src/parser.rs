@@ -13,6 +13,7 @@ mod assignment_parse;
 mod ident_parse;
 mod if_parse;
 mod while_parse;
+mod for_parse;
 
 // https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 
@@ -128,7 +129,7 @@ pub fn parse_block(lexer: &mut Lexer) -> Block {
 pub fn parse_stmt(lexer: &mut Lexer) -> Option<Stmt> {
     match lexer.peek() {
         Token {
-            ty: TokenType::NewLine,
+            ty: TokenType::NewLine | TokenType::Semicolon,
             ..
         } => {
             lexer.next();
@@ -185,6 +186,17 @@ pub fn parse_stmt(lexer: &mut Lexer) -> Option<Stmt> {
         } => {
             Some(Stmt::WhileStmt(while_parse::parse_while(lexer)))
         }
+        Token {
+            ty: TokenType::For, ..
+        } => {
+            Some(for_parse::parse_for(lexer))
+        }
+        Token {
+            ty: TokenType::Break, ..
+        } => {
+            lexer.next();
+            Some(Stmt::Break)
+        }
         _t => Some(Stmt::ExprStmt(parse_expr(lexer)))
     }
 }
@@ -226,7 +238,7 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
     loop {
         let nx = lexer.peek();
         let op = match nx.ty {
-            TokenType::EOF | TokenType::NewLine => {
+            TokenType::EOF | TokenType::NewLine | TokenType::Semicolon => {
                 break;
             }
             TokenType::Plus => Op::Plus,

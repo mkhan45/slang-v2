@@ -10,7 +10,7 @@ pub fn eval_expr(expr: &S, state: &mut State) -> Atom {
         S::Atom(a) => match a {
             Atom::Identifier(name) => match state.get_variable(name) {
                 Some(a) => a.clone(),
-                None => panic!("Variable {} undefined", name),
+                None => panic!("Variable {} undefined in state {:?}", name, state),
             },
             _ => a.clone(),
         },
@@ -24,6 +24,7 @@ pub fn eval_expr(expr: &S, state: &mut State) -> Atom {
                 (Op::Divide, [a, b, ..]) => eval(&a) / eval(&b),
                 (Op::Negate, [_a]) => todo!(),
                 (Op::Equal, [a, b]) => Atom::Bool(eval(&a) == (eval(&b))),
+                (Op::NotEqual, [a, b]) => Atom::Bool(eval(&a) != (eval(&b))),
                 (Op::Less, [a, b]) => Atom::Bool(eval(&a) < (eval(&b))),
                 (Op::Greater, [a, b]) => Atom::Bool(eval(&a) > (eval(&b))),
                 (Op::Mod, [a, b]) => eval(&a).modulus(&eval(&b)),

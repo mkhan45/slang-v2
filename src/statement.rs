@@ -6,7 +6,7 @@ use crate::{
     parser::*,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct State {
     pub scopes: Vec<Scope>,
 }
@@ -77,7 +77,7 @@ impl State {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct Scope {
     pub vars: HashMap<String, Atom>,
 }
@@ -111,6 +111,7 @@ pub enum Stmt {
     IfStmt(If),
     WhileStmt(While),
     Block(Block),
+    Break,
 }
 
 impl Stmt {
@@ -145,11 +146,15 @@ impl Stmt {
                 } = while_data;
 
                 while eval_expr(&cond, state) == Atom::Bool(true) {
-                    loop_block.execute(state);
+                    let res = loop_block.execute(state);
+                    if Some(Atom::Break) == res  {
+                        break;
+                    }
                 }
                 None
             }
             Stmt::Block(mut b) => b.execute(state),
+            Stmt::Break => Some(Atom::Break),
         }
     }
 }

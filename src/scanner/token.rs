@@ -43,6 +43,8 @@ pub enum TokenType {
     Print,
     EOF,
     Hash,
+    Semicolon,
+    Break,
     Unknown,
 }
 

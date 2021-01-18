@@ -33,10 +33,10 @@ fn num_token(source: &[char]) -> Vec<Token> {
     let cond = |&&c: &&char| c.is_numeric() || c == '.';
     let s: String = source.iter().take_while(cond).collect();
 
-    let n = if let Ok(n) = s.parse::<f32>() {
+    let n = if let Ok(n) = s.parse::<f64>() {
         Token::new(TokenType::Literal(Atom::Num(n)), s, 0)
     } else if let Ok(n) = s.parse::<isize>() {
-        Token::new(TokenType::Literal(Atom::Num(n as f32)), s, 0)
+        Token::new(TokenType::Literal(Atom::Num(n as f64)), s, 0)
     } else {
         Token::new(TokenType::Unknown, s, 0)
     };
@@ -81,12 +81,16 @@ fn ident_token(source: &[char]) -> Vec<Token> {
         "while" => TokenType::While,
         "fn" => TokenType::Function,
         "struct" => TokenType::Struct,
+        "break" => TokenType::Break,
         "print" => TokenType::Print
     );
 
     [vec![token], token_recurse(&remaining)].concat()
 }
 
+// this could probably be many times faster but
+// the evaluation will always take much longer
+// than the scanner
 fn token_recurse(source: &[char]) -> Vec<Token> {
     fn recur(ty: TokenType, s: &[char]) -> Vec<Token> {
         [vec![Token::from_ty(ty)], token_recurse(s)].concat()
@@ -117,6 +121,7 @@ fn token_recurse(source: &[char]) -> Vec<Token> {
         ['+', xs @ ..] => recur(TokenType::Plus, xs),
         ['%', xs @ ..] => recur(TokenType::Percent, xs),
         ['.', xs @ ..] => recur(TokenType::Dot, xs),
+        [';', xs @ ..] => recur(TokenType::Semicolon, xs),
         ['\"', xs @ ..] => string_token(xs),
         ls @ [c, ..] if c.is_numeric() => num_token(ls),
         ls @ [c, ..] if c.is_alphabetic() => ident_token(ls),

@@ -35,12 +35,9 @@ fn run(code: &str, state: &mut State) -> Result<Option<Atom>, Box<dyn Error>> {
         //         .collect::<Vec<TokenType>>()
         // );
         let mut lexer = Lexer::new(tokens);
-        // let expr = parse_expr(&mut lexer);
-        // println!("{}", &expr);
-        // println!("{}", eval_expr(&expr));
 
         let mut main_block = parse_block(&mut lexer);
-        dbg!(main_block.statements.clone());
+        // dbg!(main_block.statements.clone());
         let res = main_block.execute(state);
 
         Ok(res)

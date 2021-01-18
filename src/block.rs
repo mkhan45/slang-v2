@@ -13,9 +13,13 @@ impl Block {
     pub fn execute(&mut self, state: &mut State) -> Option<Atom> {
         state.scopes.push(Scope::default());
         let mut res = None;
-        self.statements.iter().cloned().for_each(|stmt| {
+        for stmt in self.statements.iter().cloned() {
             res = stmt.execute(state);
-        });
+            if res == Some(Atom::Break) {
+                break;
+            }
+        }
+
         state.scopes.pop();
         res
     }
