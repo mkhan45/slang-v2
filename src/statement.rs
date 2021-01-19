@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use crate::{
     block::Block,
@@ -78,7 +78,7 @@ impl State {
 
 #[derive(Default, Debug, Clone)]
 pub struct Scope {
-    pub vars: HashMap<String, Atom>,
+    pub vars: BTreeMap<String, Atom>,
 }
 
 #[derive(Debug, Clone)]

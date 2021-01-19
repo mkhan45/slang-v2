@@ -4,9 +4,7 @@ fn factor(n) {
     let fac = n
 
     for (let i = 2; i < n / 2; i += 1) {
-        print(i)
-        print(n / i)
-        if (n % i == 0) {
+        if (floor(n % i) == 0) {
             fac = i;
             break;
         }
