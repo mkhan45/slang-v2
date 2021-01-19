@@ -40,6 +40,7 @@ pub enum Op {
     And,
     Or,
     Indexing,
+    Access,
 }
 
 impl fmt::Display for Op {
@@ -63,6 +64,7 @@ impl fmt::Display for Op {
                 Op::And => "&&",
                 Op::Or => "||",
                 Op::Indexing => "[]",
+                Op::Access => "access",
             }
         )
     }
@@ -292,6 +294,7 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
             TokenType::And => Op::And,
             TokenType::Or => Op::Or,
             TokenType::LBracket => Op::Indexing,
+            TokenType::Dot => Op::Access,
             TokenType::RParen | TokenType::RBrace => {
                 // if paren_depth < 1 {
                 //     panic!("Unbalanced right parenthesis");
@@ -342,6 +345,7 @@ fn postfix_binding_power(op: &Op) -> Option<(u8, ())> {
 
 fn infix_binding_power(op: &Op) -> (u8, u8) {
     match op {
+        Op::Access => (8, 9),
         Op::Plus | Op::Minus => (4, 5),
         Op::Multiply | Op::Divide => (6, 7),
         Op::Mod => (2, 3),

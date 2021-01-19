@@ -162,6 +162,13 @@ impl Atom {
             _ => panic!("Can't index {:?} by {:?}", self, rhs),
         }
     }
+
+    pub fn access(&self, _rhs: &S) -> Atom {
+        todo!();
+        // match (self, rhs) {
+        //     _ => panic!("Can't access field {} of {}", rhs, self),
+        // }
+    }
 }
 
 #[derive(Debug, Clone)]

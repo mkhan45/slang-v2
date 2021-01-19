@@ -34,6 +34,7 @@ pub fn eval_expr(expr: &S, state: &mut State) -> Atom {
                 (Op::And, [a, b]) => eval(&a).and(&eval(&b)),
                 (Op::Or, [a, b]) => eval(&a).or(&eval(&b)),
                 (Op::Indexing, [a, b]) => eval(&a).index(&eval(&b)),
+                (Op::Access, [a, b]) => eval(&a).access(&b),
                 _ => panic!("invalid expr: {}", expr),
             }
         }
