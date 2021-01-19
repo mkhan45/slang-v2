@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use crate::eval::atom::{FunctionCall, FunctionData};
 use crate::statement::Declaration;
 use crate::statement::Stmt;
@@ -17,6 +19,16 @@ pub fn eval_function_call(f: &FunctionCall, state: &mut State) -> Option<Atom> {
 
     if name == "len" {
         let res = array_len(&args[0], state);
+        return Some(res);
+    }
+
+    if name == "round" {
+        let res = float_round(&args[0], state);
+        return Some(res);
+    }
+
+    if name == "floor" {
+        let res = float_floor(&args[0], state);
         return Some(res);
     }
 
@@ -74,8 +86,26 @@ fn array_push(a: &S, e: &S, state: &mut State) -> Atom {
 fn array_len(a: &S, state: &mut State) -> Atom {
     if let S::Atom(Atom::Identifier(arr_name)) = a {
         if let Some(Atom::Array(a)) = state.get_variable(&arr_name) {
-            return Atom::Num(a.len() as f64);
+            return Atom::Int(a.len().try_into().unwrap());
         }
     }
     panic!("{:?} is not an array", a)
+}
+
+fn float_round(v: &S, state: &mut State) -> Atom {
+    let f = eval_expr(v, state);
+    match f {
+        Atom::Float(n) => Atom::Int(n.round() as isize),
+        Atom::Int(n) => Atom::Int(n),
+        _ => panic!("{:?} is not a number", v),
+    }
+}
+
+fn float_floor(v: &S, state: &mut State) -> Atom {
+    let f = eval_expr(v, state);
+    match f {
+        Atom::Float(n) => Atom::Int(n.floor() as isize),
+        Atom::Int(n) => Atom::Int(n),
+        _ => panic!("{:?} is not a number", v),
+    }
 }

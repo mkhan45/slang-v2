@@ -221,6 +221,8 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
     let nx = lexer.next();
     let mut lhs = match nx.ty {
         TokenType::Literal(a) => S::Atom(a),
+        TokenType::True => S::Atom(Atom::Bool(true)),
+        TokenType::False => S::Atom(Atom::Bool(false)),
         TokenType::Identifier => match lexer.peek().ty {
             TokenType::LParen => {
                 let args = fn_parse::parse_fn_call_args(lexer);

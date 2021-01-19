@@ -33,10 +33,10 @@ fn num_token(source: &[char]) -> Vec<Token> {
     let cond = |&&c: &&char| c.is_numeric() || c == '.';
     let s: String = source.iter().take_while(cond).collect();
 
-    let n = if let Ok(n) = s.parse::<f64>() {
-        Token::new(TokenType::Literal(Atom::Num(n)), s, 0)
-    } else if let Ok(n) = s.parse::<isize>() {
-        Token::new(TokenType::Literal(Atom::Num(n as f64)), s, 0)
+    let n = if let Ok(n) = s.parse::<isize>() {
+        Token::new(TokenType::Literal(Atom::Int(n)), s, 0)
+    } else if let Ok(n) = s.parse::<f64>() {
+        Token::new(TokenType::Literal(Atom::Float(n)), s, 0)
     } else {
         Token::new(TokenType::Unknown, s, 0)
     };

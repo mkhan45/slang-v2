@@ -28,7 +28,8 @@ impl State {
     }
 
     fn modify_variable(&mut self, var: &str, val: Atom) {
-        for scope in &mut self.scopes {
+        // dbg!(self.scopes.clone());
+        for scope in &mut self.scopes.iter_mut().rev() {
             if scope.vars.contains_key(var) {
                 scope.vars.insert(var.to_string(), val);
                 break;
@@ -54,13 +55,16 @@ impl State {
             (Some(d), false) => {
                 let rhs_val = eval_expr(&dec.rhs, self);
                 if d == std::mem::discriminant(&&rhs_val) {
+                    // dbg!(dec.lhs.clone(), val.clone());
                     let new_val = match dec.plus_or_minus {
                         Some(true) => val.unwrap() + rhs_val,
                         Some(false) => val.unwrap() - rhs_val,
                         None => rhs_val,
                     };
 
+                    // dbg!(new_val.clone());
                     self.modify_variable(&dec.lhs, new_val);
+                    // dbg!(self.get_variable(&dec.lhs));
                 } else {
                     panic!("Cannot assign {:?} to {:?}", rhs_val, val);
                 }
@@ -142,7 +146,7 @@ impl Stmt {
 
                 while eval_expr(&cond, state) == Atom::Bool(true) {
                     let res = loop_block.execute(state);
-                    if Some(Atom::Break) == res {
+                    if matches!(res, Some(Atom::Break)) {
                         break;
                     }
                 }
@@ -185,17 +189,20 @@ mod stmt_tests {
     }
 
     test_files!(
-        basic1, "basic1.slang" => Some(Atom::Num(20.0));
-        basic2, "basic2.slang" => Some(Atom::Num(5.0));
+        basic1, "basic1.slang" => Some(Atom::Int(20));
+        basic2, "basic2.slang" => Some(Atom::Int(5));
         if1, "if.slang" => Some(Atom::Str("hello".to_string()));
         if2, "else.slang" => Some(Atom::Str("goodbye".to_string()));
-        scope_modify, "scope_modify.slang" => Some(Atom::Num(2.0));
-        while1, "while1.slang" => Some(Atom::Num(10.0));
-        for1, "for1.slang" => Some(Atom::Num(1053.0));
-        fn1, "fn1.slang" => Some(Atom::Num(120.0));
-        euler01, "project_euler_01.slang" => Some(Atom::Num(233168.0));
-        euler02, "project_euler_02.slang" => Some(Atom::Num(4613732.0));
-        recur1, "recursion01.slang" => Some(Atom::Num(987.0));
+        scope_modify, "scope_modify.slang" => Some(Atom::Int(2));
+        while1, "while1.slang" => Some(Atom::Int(10));
+        for1, "for1.slang" => Some(Atom::Int(1053));
+        fn1, "fn1.slang" => Some(Atom::Int(120));
+        euler01, "project_euler_01.slang" => Some(Atom::Int(233168));
+        euler02, "project_euler_02.slang" => Some(Atom::Int(4613732));
+        scoped_loop, "scoped_loop.slang" => Some(Atom::Int(45));
+        loop_break, "loop_break.slang" => Some(Atom::Int(5));
+        nested_loop_break, "nested_loop_break.slang" => Some(Atom::Int(25));
+        recur1, "recursion01.slang" => Some(Atom::Int(987));
         error1, "error1.slang";
         scope_typecheck, "scope_typecheck.slang";
     );
