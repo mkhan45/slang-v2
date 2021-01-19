@@ -45,6 +45,8 @@ pub enum TokenType {
     Hash,
     Semicolon,
     Break,
+    LBracket,
+    RBracket,
     Unknown,
 }
 

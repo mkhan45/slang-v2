@@ -10,16 +10,14 @@ pub fn parse_for(lexer: &mut Lexer) -> Stmt {
 
     assert_eq!(lexer.next().ty, TokenType::LParen);
     let init_statement = if lexer.peek().ty != TokenType::Semicolon {
-        let stmt = Some(parse_stmt(lexer));
-        stmt
+        Some(parse_stmt(lexer))
     } else {
         None
     };
     assert_eq!(lexer.next().ty, TokenType::Semicolon);
 
     let cond = if lexer.peek().ty != TokenType::Semicolon {
-        let expr = Some(parse_expr(lexer));
-        expr
+        Some(parse_expr(lexer))
     } else {
         None
     };

@@ -4,7 +4,7 @@ use std::ops::{Add, Div, Mul, Sub};
 
 use crate::parser::S;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum Atom {
     Str(String),
     Num(f64),
@@ -12,7 +12,20 @@ pub enum Atom {
     Identifier(String),
     FnCall(FunctionCall),
     Function(FunctionData),
+    Array(Vec<S>),
     Break,
+}
+
+impl PartialEq for Atom {
+    fn eq(&self, rhs: &Self) -> bool {
+        match (self, rhs) {
+            (Atom::Str(a), Atom::Str(b)) => a == b,
+            (Atom::Num(a), Atom::Num(b)) => a == b,
+            (Atom::Bool(a), Atom::Bool(b)) => a == b,
+            (Atom::Identifier(a), Atom::Identifier(b)) => a == b,
+            _ => false,
+        }
+    }
 }
 
 impl Add for Atom {
@@ -93,6 +106,7 @@ impl fmt::Display for Atom {
             Atom::Break => write!(f, "Break"),
             Atom::FnCall(FunctionCall { name, args }) => write!(f, "{}({:?})", name, args),
             Atom::Function(_) => write!(f, "FunctionData"),
+            Atom::Array(a) => write!(f, "{:?}", a),
         }
     }
 }
@@ -124,6 +138,28 @@ impl Atom {
         match (self, rhs) {
             (Atom::Bool(a), Atom::Bool(b)) => Atom::Bool(*a || *b),
             _ => todo!(),
+        }
+    }
+
+    pub fn index(&self, rhs: &Atom) -> Atom {
+        match (self, rhs) {
+            (Atom::Array(a), Atom::Num(i)) if i.fract() == 0.0 && i >= &0.0 => {
+                let i = *i as usize;
+                if i < a.len() {
+                    if let S::Atom(v) = &a[i] {
+                        v.clone()
+                    } else {
+                        unreachable!();
+                    }
+                } else {
+                    panic!(
+                        "Tried getting {:?}th element of array with length {}",
+                        i,
+                        a.len()
+                    )
+                }
+            }
+            _ => panic!("Can't index {:?} by {:?}", self, rhs),
         }
     }
 }

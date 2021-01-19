@@ -122,11 +122,13 @@ fn token_recurse(source: &[char]) -> Vec<Token> {
         ['%', xs @ ..] => recur(TokenType::Percent, xs),
         ['.', xs @ ..] => recur(TokenType::Dot, xs),
         [';', xs @ ..] => recur(TokenType::Semicolon, xs),
+        ['[', xs @ ..] => recur(TokenType::LBracket, xs),
+        [']', xs @ ..] => recur(TokenType::RBracket, xs),
         ['\"', xs @ ..] => string_token(xs),
         ls @ [c, ..] if c.is_numeric() => num_token(ls),
         ls @ [c, ..] if c.is_alphabetic() => ident_token(ls),
         [c, xs @ ..] if c.is_whitespace() => token_recurse(xs),
-        c @ _ => panic!("Invalid input {:?}", c),
+        c => panic!("Invalid input {:?}", c),
     }
 }
 

@@ -20,14 +20,14 @@ impl Default for State {
 }
 
 impl State {
-    pub fn get_variable(&self, var: &String) -> Option<&Atom> {
+    pub fn get_variable(&self, var: &str) -> Option<&Atom> {
         self.scopes
             .iter()
             .rev()
             .find_map(|scope| scope.vars.get(var))
     }
 
-    pub fn modify_variable(&mut self, var: &String, val: Atom) {
+    fn modify_variable(&mut self, var: &str, val: Atom) {
         for scope in &mut self.scopes {
             if scope.vars.contains_key(var) {
                 scope.vars.insert(var.to_string(), val);
@@ -43,32 +43,27 @@ impl State {
         };
 
         match (disc, dec.alias) {
-            (Some(d), alias) => {
-                let rhs_val = eval_expr(&dec.rhs, self);
-                let new_val = match dec.plus_or_minus {
-                    Some(true) => val.unwrap() + rhs_val,
-                    Some(false) => val.unwrap() - rhs_val,
-                    None => rhs_val,
-                };
-
-                if d == std::mem::discriminant(&&new_val) || alias {
-                    self.modify_variable(&dec.lhs, new_val);
-                } else {
-                    panic!(
-                        "Mismatched types for {}, can't assign {:?} to {:?}",
-                        dec.lhs,
-                        new_val,
-                        self.get_variable(&dec.lhs).unwrap()
-                    );
-                }
-            }
-            (None, true) => {
+            (_, true) => {
                 let new_val = eval_expr(&dec.rhs, self);
                 self.scopes
                     .last_mut()
                     .unwrap()
                     .vars
                     .insert(dec.lhs, new_val);
+            }
+            (Some(d), false) => {
+                let rhs_val = eval_expr(&dec.rhs, self);
+                if d == std::mem::discriminant(&&rhs_val) {
+                    let new_val = match dec.plus_or_minus {
+                        Some(true) => val.unwrap() + rhs_val,
+                        Some(false) => val.unwrap() - rhs_val,
+                        None => rhs_val,
+                    };
+
+                    self.modify_variable(&dec.lhs, new_val);
+                } else {
+                    panic!("Cannot assign {:?} to {:?}", rhs_val, val);
+                }
             }
             (None, false) => {
                 panic!("Uninitialized variable {}", dec.lhs)
@@ -200,6 +195,7 @@ mod stmt_tests {
         fn1, "fn1.slang" => Some(Atom::Num(120.0));
         euler01, "project_euler_01.slang" => Some(Atom::Num(233168.0));
         euler02, "project_euler_02.slang" => Some(Atom::Num(4613732.0));
+        recur1, "recursion01.slang" => Some(Atom::Num(987.0));
         error1, "error1.slang";
         scope_typecheck, "scope_typecheck.slang";
     );

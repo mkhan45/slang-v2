@@ -1,6 +1,6 @@
 use crate::{parse_expr, statement::Declaration, Lexer, Token, TokenType};
 
-pub fn parse_assignment(lexer: &mut Lexer) -> Declaration {
+pub fn parse_declaration(lexer: &mut Lexer) -> Declaration {
     if let Token {
         ty: TokenType::Identifier,
         lexeme: name,

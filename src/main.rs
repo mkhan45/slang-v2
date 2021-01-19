@@ -95,11 +95,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             rhs: S::Atom(Atom::Function(FunctionData {
                 arg_names: vec!["x".to_string(), "y".to_string()],
                 fn_block: Block::new(vec![Stmt::ExprStmt(S::Cons(
-                            Op::Multiply,
-                            vec![
-                            S::Atom(Atom::Identifier("x".to_string())),
-                            S::Atom(Atom::Identifier("y".to_string())),
-                            ],
+                    Op::Multiply,
+                    vec![
+                        S::Atom(Atom::Identifier("x".to_string())),
+                        S::Atom(Atom::Identifier("y".to_string())),
+                    ],
                 ))]),
             })),
             alias: true,

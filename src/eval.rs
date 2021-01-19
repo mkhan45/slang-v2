@@ -33,6 +33,7 @@ pub fn eval_expr(expr: &S, state: &mut State) -> Atom {
                 (Op::Mod, [a, b]) => eval(&a).modulus(&eval(&b)),
                 (Op::And, [a, b]) => eval(&a).and(&eval(&b)),
                 (Op::Or, [a, b]) => eval(&a).or(&eval(&b)),
+                (Op::Indexing, [a, b]) => eval(&a).index(&eval(&b)),
                 _ => panic!("invalid expr: {}", expr),
             }
         }

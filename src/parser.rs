@@ -1,5 +1,5 @@
-use crate::statement::Declaration;
 use crate::eval::atom::FunctionCall;
+use crate::statement::Declaration;
 use std::fmt;
 
 use crate::{scanner::token::*, statement::Stmt};
@@ -23,7 +23,7 @@ pub enum S {
     Cons(Op, Vec<S>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Op {
     Plus,
     PlusAssign,
@@ -39,6 +39,7 @@ pub enum Op {
     Mod,
     And,
     Or,
+    Indexing,
 }
 
 impl fmt::Display for Op {
@@ -61,6 +62,7 @@ impl fmt::Display for Op {
                 Op::Mod => "%",
                 Op::And => "&&",
                 Op::Or => "||",
+                Op::Indexing => "[]",
             }
         )
     }
@@ -166,7 +168,7 @@ pub fn parse_stmt(lexer: &mut Lexer) -> Option<Stmt> {
             ty: TokenType::Let, ..
         } => {
             lexer.next();
-            Some(Stmt::Dec(assignment_parse::parse_assignment(lexer)))
+            Some(Stmt::Dec(assignment_parse::parse_declaration(lexer)))
         }
         Token {
             ty: TokenType::Identifier,
@@ -245,13 +247,34 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
                 panic!("Unbalanced left parenthesis")
             }
         }
+        TokenType::LBracket => {
+            let next_elem = || {
+                if lexer.peek().ty != TokenType::RBracket {
+                    let res = parse_expr(lexer);
+                    if lexer.peek().ty == TokenType::Comma {
+                        lexer.next();
+                    }
+                    Some(res)
+                } else {
+                    assert_eq!(lexer.next().ty, TokenType::RBracket);
+                    None
+                }
+            };
+
+            let arr_elements: Vec<S> = std::iter::from_fn(next_elem).collect();
+            S::Atom(Atom::Array(arr_elements))
+        }
         _ => panic!("Invalid token {}", nx),
     };
 
     loop {
         let nx = lexer.peek();
         let op = match nx.ty {
-            TokenType::EOF | TokenType::NewLine | TokenType::Semicolon | TokenType::Comma => {
+            TokenType::EOF
+            | TokenType::NewLine
+            | TokenType::Semicolon
+            | TokenType::Comma
+            | TokenType::RBracket => {
                 break;
             }
             TokenType::Plus => Op::Plus,
@@ -268,6 +291,7 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
             TokenType::Percent => Op::Mod,
             TokenType::And => Op::And,
             TokenType::Or => Op::Or,
+            TokenType::LBracket => Op::Indexing,
             TokenType::RParen | TokenType::RBrace => {
                 // if paren_depth < 1 {
                 //     panic!("Unbalanced right parenthesis");
@@ -276,6 +300,23 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
             }
             t => unimplemented!("Operator: {:?}, lhs: {:?}", t, lhs), // could be panic
         };
+
+        if let Some((l_bp, ())) = postfix_binding_power(&op) {
+            if l_bp < bp {
+                break;
+            }
+            lexer.next();
+
+            lhs = if op == Op::Indexing {
+                let rhs = parse_expr(lexer);
+                assert_eq!(lexer.next().ty, TokenType::RBracket);
+                S::Cons(op, vec![lhs, rhs])
+            } else {
+                S::Cons(op, vec![lhs])
+            };
+
+            continue;
+        }
 
         let (l_bp, r_bp) = infix_binding_power(&op);
         if l_bp < bp {
@@ -289,6 +330,14 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
     }
 
     lhs
+}
+
+fn postfix_binding_power(op: &Op) -> Option<(u8, ())> {
+    let res = match op {
+        Op::Indexing => (9, ()),
+        _ => return None,
+    };
+    Some(res)
 }
 
 fn infix_binding_power(op: &Op) -> (u8, u8) {
