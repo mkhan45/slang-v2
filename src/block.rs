@@ -10,8 +10,7 @@ impl Block {
         Block { statements }
     }
 
-    pub fn execute(&mut self, state: &mut State) -> Option<Atom> {
-        state.scopes.push(Scope::default());
+    pub fn execute_unscoped(&mut self, state: &mut State) -> Option<Atom> {
         let mut res = None;
 
         for stmt in self.statements.iter().cloned() {
@@ -21,6 +20,12 @@ impl Block {
             }
         }
 
+        res
+    }
+
+    pub fn execute(&mut self, state: &mut State) -> Option<Atom> {
+        state.scopes.push(Scope::default());
+        let res = self.execute_unscoped(state);
         state.scopes.pop();
         res
     }

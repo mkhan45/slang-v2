@@ -5,6 +5,7 @@
 use crate::eval::atom::Atom;
 use std::error::Error;
 use std::io;
+use std::io::BufRead;
 use std::io::Write;
 
 mod scanner;
@@ -21,7 +22,7 @@ mod statement;
 
 mod block;
 
-fn run(code: &str, state: &mut State) -> Result<Option<Atom>, Box<dyn Error>> {
+fn run(code: &str, state: &mut State, unscoped: bool) -> Result<Option<Atom>, Box<dyn Error>> {
     let tokens = scan_tokens(code);
     if let Some(t) = tokens.iter().find(|t| t.ty == TokenType::Unknown) {
         Err(format!("Invalid {:?} ({}) on line {}", t.ty, t.lexeme, t.line).into())
@@ -37,7 +38,12 @@ fn run(code: &str, state: &mut State) -> Result<Option<Atom>, Box<dyn Error>> {
         let mut lexer = Lexer::new(tokens);
 
         let mut main_block = parse_block(&mut lexer);
-        let res = main_block.execute(state);
+
+        let res = if unscoped {
+            main_block.execute_unscoped(state)
+        } else {
+            main_block.execute_unscoped(state)
+        };
 
         Ok(res)
     }
@@ -48,7 +54,7 @@ fn run_file(
     state: &mut State,
 ) -> Result<Option<Atom>, Box<dyn Error>> {
     let file = std::fs::read_to_string(path)?;
-    let res = run(&file, state)?;
+    let res = run(&file, state, false)?;
     if let Some(ref a) = res {
         println!("{}", a);
     }
@@ -59,19 +65,23 @@ fn run_file(
 fn run_prompt(state: &mut State) -> Result<Option<Atom>, Box<dyn Error>> {
     let stdin = io::stdin();
     let mut stdout = io::stdout();
-    let mut buffer = String::new();
+    let mut buffer = Vec::new();
 
     loop {
-        print!(">> ");
+        print!("Slang |>\n");
         stdout.flush()?;
         buffer.clear();
-        stdin.read_line(&mut buffer)?;
 
-        if buffer == *"exit".to_string() {
+        // stupid hack, REPL goes until ~
+        stdin.lock().read_until(b'~', &mut buffer)?;
+
+        let buffer_str = std::str::from_utf8(&buffer).unwrap();
+
+        if buffer_str == "exit" {
             break;
         }
 
-        if let Some(a) = run(&buffer, state)? {
+        if let Some(a) = run(&buffer_str[..buffer.len() - 2], state, true)? {
             println!("{}", a);
         }
     }

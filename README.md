@@ -2,7 +2,9 @@
 
 Slang is a treewalk scripting language interpreter from loosely following https://craftinginterpreters.com/. I've also used <https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html> to write the parser.
 
-Since this is a treewalk interpreter and I'm planning on writing a bytecode interpreter version, I put absolutely no effort into optimization and it's quite slow. The project euler tests are translated from <https://github.com/asterane/project-euler> since Slang is basically C with less features. Throughout the Readme, Rust syntax highlighting is used because it's close enough
+Since this is a treewalk interpreter and I'm planning on writing a bytecode interpreter version, I put absolutely no effort into optimization and it's quite slow. The project euler tests are translated from <https://github.com/asterane/project-euler> since Slang is basically C with less features. Throughout the Readme, Rust syntax highlighting is used because it's close enough.
+
+In the REPL, add '~' at the end of the input. This is the easiest way I could think of to make it work with multiline.
 
 ## Examples
 
