@@ -153,3 +153,7 @@ fn call_n_times(n, f, x) {
 print(run(add, 15, 20)) # 35
 print(call_n_times(4, square, 2)) # 65536
 ```
+
+#### Examples
+
+There are more examples in the `test_files` directory. The most impressive one is `pong_stdg.slang` which is Pong with two AIs. It needs to be run with <https://github.com/calebwin/stdg/releases/tag/v0.2.0>.
