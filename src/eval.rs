@@ -10,10 +10,12 @@ pub fn eval_expr(expr: &S, state: &mut State) -> Atom {
     let mut eval = |expr: &S| eval_expr(expr, state);
     match expr {
         S::Atom(a) => match a {
-            Atom::Identifier(name) => match state.get_variable(name) {
-                Some(a) => a.clone(),
-                None => panic!("Variable {} undefined in state {:?}", name, state),
-            },
+            Atom::Identifier(name) => {
+                match state.get_variable(name) {
+                    Some(a) => a.clone(),
+                    None => panic!("Variable {} undefined in state {:?}", name, state),
+                }
+            } ,
             Atom::FnCall(f) => function::eval_function_call(f, state).unwrap(),
             _ => a.clone(),
         },
@@ -33,7 +35,10 @@ pub fn eval_expr(expr: &S, state: &mut State) -> Atom {
                 (Op::Mod, [a, b]) => eval(&a).modulus(&eval(&b)),
                 (Op::And, [a, b]) => eval(&a).and(&eval(&b)),
                 (Op::Or, [a, b]) => eval(&a).or(&eval(&b)),
-                (Op::Indexing, [a, b]) => eval(&a).index(&eval(&b)),
+                (Op::Indexing, [a, b]) => {
+                    let a = eval(&a).index(&eval(&b));
+                    eval(&S::Atom(a))
+                },
                 (Op::Access, [a, b]) => eval(&a).access(&b),
                 _ => panic!("invalid expr: {}", expr),
             }

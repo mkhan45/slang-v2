@@ -3,7 +3,6 @@ fn check(p) {
     let n = p
     let l = 0
 
-    # i is borked
     for (let i = 0; i < 6; i += 1) {
         push(digits, n % 10)
 

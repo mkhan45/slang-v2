@@ -1,5 +1,3 @@
-# doesn't work because floating point modulus is weird
-
 fn factor(n) {
     let fac = n
 

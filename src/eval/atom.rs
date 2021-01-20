@@ -34,15 +34,17 @@ impl Add for Atom {
     type Output = Atom;
 
     fn add(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (Atom::Str(_), Atom::Str(_)) => todo!(),
-            (Atom::Str(_), Atom::Float(_)) => todo!(),
-            (Atom::Float(_), Atom::Str(_)) => todo!(),
+        match (&self, &rhs) {
+            (Atom::Str(a), Atom::Str(b)) => Atom::Str(format!("{}{}", a, b)),
+            (Atom::Str(s), Atom::Float(f)) => Atom::Str(format!("{}{}", s, f)),
+            (Atom::Float(f), Atom::Str(s)) => Atom::Str(format!("{}{}", f, s)),
+            (Atom::Str(s), Atom::Int(i)) => Atom::Str(format!("{}{}", s, i)),
+            (Atom::Int(i), Atom::Str(s)) => Atom::Str(format!("{}{}", i, s)),
             (Atom::Float(a), Atom::Float(b)) => Atom::Float(a + b),
-            (Atom::Int(a), Atom::Float(b)) => Atom::Float(a as f64 + b),
-            (Atom::Float(a), Atom::Int(b)) => Atom::Float(a + b as f64),
+            (Atom::Int(a), Atom::Float(b)) => Atom::Float(*a as f64 + b),
+            (Atom::Float(a), Atom::Int(b)) => Atom::Float(a + *b as f64),
             (Atom::Int(a), Atom::Int(b)) => Atom::Int(a + b),
-            _ => todo!(),
+            _ => panic!("Add not implemented between {} and {}", self, rhs),
         }
     }
 }
