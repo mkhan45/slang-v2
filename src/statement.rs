@@ -144,13 +144,17 @@ impl Stmt {
                     mut loop_block,
                 } = while_data;
 
+                let mut res = None;
+
                 while eval_expr(&cond, state) == Atom::Bool(true) {
-                    let res = loop_block.execute(state);
+                    res = loop_block.execute(state);
                     if matches!(res, Some(Atom::Break)) {
+                        res = None;
                         break;
                     }
                 }
-                None
+
+                res
             }
             Stmt::Block(mut b) => b.execute(state),
             Stmt::Break => Some(Atom::Break),
