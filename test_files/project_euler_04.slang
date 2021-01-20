@@ -30,21 +30,17 @@ fn check(p) {
    let result = 0
 
    for (let i = 999; i > 99; i = i - 1) {
-       let broke = false
-
        for (let j = 999; j > i; j = j - 1) {
            let prod = i * j
 
+           if (prod < result) {
+                break
+           }
+
            if (check(prod)) {
-               print(prod)
                result = prod
-               broke = true
                break
            }
-       }
-
-       if (broke) {
-           break
        }
    }
 

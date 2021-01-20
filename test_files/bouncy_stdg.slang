@@ -6,12 +6,10 @@ let screen_y = 600
 let x = 200.0
 let y = 200.0
 
-let x_vel = 0.3
-let y_vel = 0.2
+let x_vel = 0.4
+let y_vel = 0.8
 
 let radius = 20.0
-
-print("start " + screen_x + " " + screen_y + " Bouncy")
 
 fn concat(arr) {
     let sum = ""
@@ -26,9 +24,11 @@ fn concat(arr) {
     sum
 }
 
-while(true) {
+print(concat(["start", screen_x, screen_y, "Bouncy"]))
+
+for (;;) {
     print(concat(["background", 0, 0, 0]))
-    print(concat(["fill", 255, 255, 255, 255]))
+    print(concat(["fill", 255, 255, 255]))
     print(concat(["stroke", 255, 255, 255]))
     print(concat(["circle", x, y, radius]))
     print("present")

@@ -15,8 +15,12 @@ pub fn eval_expr(expr: &S, state: &mut State) -> Atom {
                     Some(a) => a.clone(),
                     None => panic!("Variable {} undefined in state {:?}", name, state),
                 }
-            } ,
+            }
             Atom::FnCall(f) => function::eval_function_call(f, state).unwrap(),
+            Atom::Array(arr) => {
+                let new_arr = arr.iter().map(|s| S::Atom(eval(s))).collect();
+                Atom::Array(new_arr).clone()
+            }
             _ => a.clone(),
         },
         S::Cons(op, xs) => {
@@ -27,7 +31,7 @@ pub fn eval_expr(expr: &S, state: &mut State) -> Atom {
                 (Op::Minus, [a]) => eval(&a).negate(),
                 (Op::Multiply, [a, b, ..]) => eval(&a) * eval(&b),
                 (Op::Divide, [a, b, ..]) => eval(&a) / eval(&b),
-                (Op::Negate, [_a]) => todo!(),
+                (Op::Negate, [a]) => eval(&a).negate(),
                 (Op::Equal, [a, b]) => Atom::Bool(eval(&a) == (eval(&b))),
                 (Op::NotEqual, [a, b]) => Atom::Bool(eval(&a) != (eval(&b))),
                 (Op::Less, [a, b]) => Atom::Bool(eval(&a) < (eval(&b))),

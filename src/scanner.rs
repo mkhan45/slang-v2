@@ -124,6 +124,7 @@ fn token_recurse(source: &[char]) -> Vec<Token> {
         [';', xs @ ..] => recur(TokenType::Semicolon, xs),
         ['[', xs @ ..] => recur(TokenType::LBracket, xs),
         [']', xs @ ..] => recur(TokenType::RBracket, xs),
+        ['!', xs @ ..] => recur(TokenType::Bang, xs),
         ['\"', xs @ ..] => string_token(xs),
         ls @ [c, ..] if c.is_numeric() => num_token(ls),
         ls @ [c, ..] if c.is_alphabetic() => ident_token(ls),
