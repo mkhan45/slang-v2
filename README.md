@@ -71,7 +71,7 @@ let y = "abc"
 
 x = "abc" # errors
 let y = 5 # doesn't error
-``
+```
 
 Arithmetic operations are implemented between Floats and Integers.
 
