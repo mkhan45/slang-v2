@@ -13,30 +13,12 @@ fn skip_comment(source: &[char]) -> Vec<char> {
         .collect_vec()
 }
 
-fn string_token(source: &[char]) -> Vec<Token> {
-    let cond = |&&c: &&char| c != '\"';
-    let s: String = source.iter().take_while(cond).collect();
-    let remaining = source
-        .iter()
-        .skip_while(cond)
-        .skip(1)
-        .copied()
-        .collect_vec();
-    [
-        vec![Token::new(TokenType::Literal(Atom::Str(s.clone())), s, 0)],
-        token_recurse(&remaining),
-    ]
-    .concat()
-}
-
 fn num_token(source: &[char]) -> Vec<Token> {
     let cond = |&&c: &&char| c.is_numeric() || c == '.';
     let s: String = source.iter().take_while(cond).collect();
 
     let n = if let Ok(n) = s.parse::<isize>() {
         Token::new(TokenType::Literal(Atom::Int(n)), s, 0)
-    } else if let Ok(n) = s.parse::<f64>() {
-        Token::new(TokenType::Literal(Atom::Float(n)), s, 0)
     } else {
         Token::new(TokenType::Unknown, s, 0)
     };
@@ -125,7 +107,6 @@ fn token_recurse(source: &[char]) -> Vec<Token> {
         ['[', xs @ ..] => recur(TokenType::LBracket, xs),
         [']', xs @ ..] => recur(TokenType::RBracket, xs),
         ['!', xs @ ..] => recur(TokenType::Bang, xs),
-        ['\"', xs @ ..] => string_token(xs),
         ls @ [c, ..] if c.is_numeric() => num_token(ls),
         ls @ [c, ..] if c.is_alphabetic() => ident_token(ls),
         [c, xs @ ..] if c.is_whitespace() => token_recurse(xs),

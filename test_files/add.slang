@@ -1,9 +1,12 @@
-if (1 + 10 == 11) {
-    print(5)
-} else {
-    print(10)
+let a = 1
+let b = 1
+let c = 0
+
+for (let i = 0; i < 15; i += 1) {
+    print(b)
+    c = b
+    b = b + a
+    a = c
 }
 
-for (let i = 0; i < 10; i += 1) {
-    print(i)
-}
+print(b)

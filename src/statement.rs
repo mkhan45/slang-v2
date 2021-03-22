@@ -1,80 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::{
-    block::Block,
-    eval::{atom::Atom, eval_expr},
-    parser::*,
-};
-
-#[derive(Debug, Clone)]
-pub struct State {
-    pub scopes: Vec<Scope>,
-}
-
-impl Default for State {
-    fn default() -> Self {
-        State {
-            scopes: vec![Scope::default()],
-        }
-    }
-}
-
-impl State {
-    pub fn get_variable(&self, var: &str) -> Option<&Atom> {
-        self.scopes
-            .iter()
-            .rev()
-            .find_map(|scope| scope.vars.get(var))
-    }
-
-    fn modify_variable(&mut self, var: &str, val: Atom) {
-        // dbg!(self.scopes.clone());
-        for scope in &mut self.scopes.iter_mut().rev() {
-            if scope.vars.contains_key(var) {
-                scope.vars.insert(var.to_string(), val);
-                break;
-            }
-        }
-    }
-
-    pub fn declare(&mut self, dec: Declaration) {
-        let (val, disc) = {
-            let var = self.get_variable(&dec.lhs);
-            (var.cloned(), var.map(std::mem::discriminant))
-        };
-
-        match (disc, dec.alias) {
-            (_, true) => {
-                let new_val = eval_expr(&dec.rhs, self);
-                self.scopes
-                    .last_mut()
-                    .unwrap()
-                    .vars
-                    .insert(dec.lhs, new_val);
-            }
-            (Some(d), false) => {
-                let rhs_val = eval_expr(&dec.rhs, self);
-                if d == std::mem::discriminant(&&rhs_val) {
-                    // dbg!(dec.lhs.clone(), val.clone());
-                    let new_val = match dec.plus_or_minus {
-                        Some(true) => val.unwrap() + rhs_val,
-                        Some(false) => val.unwrap() - rhs_val,
-                        None => rhs_val,
-                    };
-
-                    // dbg!(new_val.clone());
-                    self.modify_variable(&dec.lhs, new_val);
-                    // dbg!(self.get_variable(&dec.lhs));
-                } else {
-                    panic!("Cannot assign {:?} to {:?}", rhs_val, val);
-                }
-            }
-            (None, false) => {
-                panic!("Uninitialized variable {}", dec.lhs)
-            }
-        }
-    }
-}
+use crate::{block::Block, eval::atom::Atom, parser::*};
 
 #[derive(Default, Debug, Clone)]
 pub struct Scope {
@@ -120,53 +46,6 @@ pub enum Stmt {
 }
 
 impl Stmt {
-    pub fn execute(self, state: &mut State) -> Option<Atom> {
-        match self {
-            Stmt::ExprStmt(expr) => Some(eval_expr(&expr, state)),
-            Stmt::PrintStmt(expr) => {
-                println!("{}", eval_expr(&expr, state));
-                None
-            }
-            Stmt::Dec(dec) => {
-                state.declare(dec);
-                None
-            }
-            Stmt::IfStmt(if_data) => {
-                let If {
-                    cond,
-                    mut then_block,
-                    mut else_block,
-                } = if_data;
-
-                if eval_expr(&cond, state) == Atom::Bool(true) {
-                    then_block.execute(state)
-                } else {
-                    else_block.execute(state)
-                }
-            }
-            Stmt::WhileStmt(while_data) => {
-                let While {
-                    cond,
-                    mut loop_block,
-                } = while_data;
-
-                let mut res = None;
-
-                while eval_expr(&cond, state) == Atom::Bool(true) {
-                    res = loop_block.execute(state);
-                    if matches!(res, Some(Atom::Break)) {
-                        res = None;
-                        break;
-                    }
-                }
-
-                res
-            }
-            Stmt::Block(mut b) => b.execute(state),
-            Stmt::Break => Some(Atom::Break),
-        }
-    }
-
     pub fn compile(&self, scope: &mut CompileScope) {
         use Stmt::*;
 

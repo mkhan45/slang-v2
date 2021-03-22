@@ -1,19 +1,63 @@
 
+Push 1
+
+
+Push 1
+
+
+Push 0
+
+
+
 Push 0
 
 
 label 1
-Get 0
-Push 10000000
+Get 3
+Push 15
 LT
 JE 2
 
+Get 1
+Print
+Push 10
+PrintC
+Pop
+Pop
+
+
+Get 1
+Set 2
+Pop
+
+
+Get 1
 Get 0
+Add
+Set 1
+Pop
+
+
+Get 2
+Set 0
+Pop
+
+
+Get 3
 Push 1
 Add
-Set 0
+Set 3
 Pop
 
 Jump 1
 label 2
+
+
+
+Get 1
+Print
+Push 10
+PrintC
+Pop
+Pop
 

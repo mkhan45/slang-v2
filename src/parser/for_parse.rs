@@ -39,7 +39,7 @@ pub fn parse_for(lexer: &mut Lexer) -> Stmt {
     }
 
     let while_stmt = While {
-        cond: cond.unwrap_or(S::Atom(Atom::Bool(true))),
+        cond: cond.unwrap_or(S::Atom(Atom::Int(1))),
         loop_block,
     };
 

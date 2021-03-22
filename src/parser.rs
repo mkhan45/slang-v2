@@ -1,6 +1,4 @@
-use crate::eval::atom::FunctionCall;
 use crate::statement::CompileScope;
-use crate::statement::Declaration;
 use std::fmt;
 
 use crate::{scanner::token::*, statement::Stmt};
@@ -10,7 +8,6 @@ use crate::eval::atom::Atom;
 use crate::block::Block;
 
 mod assignment_parse;
-mod fn_parse;
 mod for_parse;
 mod ident_parse;
 mod if_parse;
@@ -68,21 +65,6 @@ impl fmt::Display for Op {
                 Op::Access => "access",
             }
         )
-    }
-}
-
-impl fmt::Display for S {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            S::Atom(i) => write!(f, "{}", i),
-            S::Cons(head, rest) => {
-                write!(f, "({}", head)?;
-                for s in rest {
-                    write!(f, " {}", s)?
-                }
-                write!(f, ")")
-            }
-        }
     }
 }
 
@@ -255,18 +237,6 @@ pub fn parse_stmt(lexer: &mut Lexer) -> Option<Stmt> {
             lexer.next();
             Some(Stmt::Break)
         }
-        Token {
-            ty: TokenType::Function,
-            ..
-        } => {
-            let (fn_name, fn_data) = fn_parse::parse_fn_dec(lexer);
-            Some(Stmt::Dec(Declaration {
-                lhs: fn_name,
-                rhs: S::Atom(Atom::Function(fn_data)),
-                alias: true,
-                plus_or_minus: None,
-            }))
-        }
         _t => Some(Stmt::ExprStmt(parse_expr(lexer))),
     }
 }
@@ -283,18 +253,9 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
     let nx = lexer.next();
     let mut lhs = match nx.ty {
         TokenType::Literal(a) => S::Atom(a),
-        TokenType::True => S::Atom(Atom::Bool(true)),
-        TokenType::False => S::Atom(Atom::Bool(false)),
-        TokenType::Identifier => match lexer.peek().ty {
-            TokenType::LParen => {
-                let args = fn_parse::parse_fn_call_args(lexer);
-                S::Atom(Atom::FnCall(FunctionCall {
-                    name: nx.lexeme,
-                    args,
-                }))
-            }
-            _ => S::Atom(Atom::Identifier(nx.lexeme)),
-        },
+        TokenType::True => S::Atom(Atom::Int(1)),
+        TokenType::False => S::Atom(Atom::Int(0)),
+        TokenType::Identifier => S::Atom(Atom::Identifier(nx.lexeme)),
         t if is_prefix_op(&t) => {
             let op = match t {
                 TokenType::Minus => Op::Minus,
@@ -312,23 +273,6 @@ fn expr_bp(lexer: &mut Lexer, bp: u8, paren_depth: u16) -> S {
             } else {
                 panic!("Unbalanced left parenthesis")
             }
-        }
-        TokenType::LBracket => {
-            let next_elem = || {
-                if lexer.peek().ty != TokenType::RBracket {
-                    let res = parse_expr(lexer);
-                    if lexer.peek().ty == TokenType::Comma {
-                        lexer.next();
-                    }
-                    Some(res)
-                } else {
-                    assert_eq!(lexer.next().ty, TokenType::RBracket);
-                    None
-                }
-            };
-
-            let arr_elements: Vec<S> = std::iter::from_fn(next_elem).collect();
-            S::Atom(Atom::Array(arr_elements))
         }
         _ => panic!("Invalid token {}", nx),
     };
