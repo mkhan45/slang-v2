@@ -111,28 +111,30 @@ impl Stmt {
                 then_block,
                 else_block,
             }) => {
+                let current_label = scope.label_count;
+                scope.label_count += 2;
                 println!("-- start if block");
                 cond.compile(scope);
-                println!("JE {}", scope.label_count);
+                println!("JE {}", current_label);
                 println!("Pop");
                 then_block.compile(scope);
-                println!("Jump {}", scope.label_count + 1);
-                println!("label {}", scope.label_count);
+                println!("Jump {}", current_label + 1);
+                println!("label {}", current_label);
                 else_block.compile(scope);
-                println!("label {}", scope.label_count + 1);
-                scope.label_count += 2;
+                println!("label {}", current_label + 1);
                 println!("-- end if block");
             }
             WhileStmt(While { cond, loop_block }) => {
+                let current_label = scope.label_count;
+                scope.label_count += 2;
                 println!("-- start while block");
-                println!("label {}", scope.label_count + 1);
+                println!("label start_while_{}", current_label);
                 cond.compile(scope);
-                println!("JE {}", scope.label_count + 2);
+                println!("JE end_while_{}", current_label + 1);
                 println!("Pop");
                 loop_block.compile(scope);
-                println!("Jump {}", scope.label_count + 1);
-                println!("label {}", scope.label_count + 2);
-                scope.label_count += 2;
+                println!("Jump start_while_{}", current_label);
+                println!("label end_while_{}", current_label + 1);
                 println!("-- end while block");
             }
             Block(b) => {

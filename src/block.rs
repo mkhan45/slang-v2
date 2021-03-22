@@ -12,6 +12,7 @@ impl Block {
     }
 
     pub fn compile(&self, scope: &mut CompileScope) {
+        println!("-- start scope");
         scope.vars.push(BTreeMap::new());
         self.statements.iter().for_each(|s| s.compile(scope));
         let last = scope.vars.pop().unwrap();

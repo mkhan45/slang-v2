@@ -1,3 +1,4 @@
+-- start scope
 -- start declaration of a
 Push 1
 -- end declaration of a
@@ -6,17 +7,19 @@ Push 1
 Push 1
 -- end declaration of b
 
+-- start scope
 -- start declaration of i
 Push 0
 -- end declaration of i
 
 -- start while block
-label 1
+label start_while_0
 Get 2
 Push 10
 LT
-JE 2
+JE end_while_1
 Pop
+-- start scope
 -- start declaration of c
 Get 1
 -- end declaration of c
@@ -54,8 +57,77 @@ Pop
 
 Pop
 -- end scope
-Jump 1
-label 2
+Jump start_while_0
+label end_while_1
+-- end while block
+
+Pop
+-- end scope
+
+-- start scope
+-- start declaration of i
+Push 0
+-- end declaration of i
+
+-- start while block
+label start_while_2
+Get 2
+Push 10
+LT
+JE end_while_3
+Pop
+-- start scope
+-- start scope
+-- start declaration of j
+Push 0
+-- end declaration of j
+
+-- start while block
+label start_while_4
+Get 3
+Push 10
+LT
+JE end_while_5
+Pop
+-- start scope
+-- start print stmt
+Get 2
+Get 3
+Mul
+Print
+Push 10
+PrintC
+Pop
+Pop
+-- end print stmt
+
+-- start declaration of j
+Get 3
+Push 1
+Add
+Set 3
+Pop
+-- end declaration of j
+
+-- end scope
+Jump start_while_4
+label end_while_5
+-- end while block
+
+Pop
+-- end scope
+
+-- start declaration of i
+Get 2
+Push 1
+Add
+Set 2
+Pop
+-- end declaration of i
+
+-- end scope
+Jump start_while_2
+label end_while_3
 -- end while block
 
 Pop
