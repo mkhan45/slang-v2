@@ -1,4 +1,5 @@
 use crate::statement::*;
+use crate::BTreeMap;
 
 #[derive(Debug, Clone)]
 pub struct Block {
@@ -11,6 +12,10 @@ impl Block {
     }
 
     pub fn compile(&self, scope: &mut CompileScope) {
+        scope.vars.push(BTreeMap::new());
         self.statements.iter().for_each(|s| s.compile(scope));
+        let last = scope.vars.pop().unwrap();
+        (0..last.len()).for_each(|_| println!("Pop"));
+        println!("-- end scope");
     }
 }

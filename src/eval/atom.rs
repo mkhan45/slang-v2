@@ -14,8 +14,14 @@ impl Atom {
         match self {
             Int(i) => println!("Push {}", i),
             Identifier(n) => {
-                let i = scope.vars.get(n).unwrap();
-                println!("Get {}", i);
+                let mut full_len: usize = scope.vars.iter().map(|s| s.len()).sum();
+                for s in scope.vars.iter().rev() {
+                    if s.contains_key(n) {
+                        println!("Get {}", full_len - s.len() + s.get(n).unwrap());
+                        break;
+                    }
+                    full_len -= s.len();
+                }
             }
         }
     }

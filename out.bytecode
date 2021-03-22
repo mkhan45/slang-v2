@@ -1,63 +1,66 @@
-
+-- start declaration of a
 Push 1
+-- end declaration of a
 
-
+-- start declaration of b
 Push 1
+-- end declaration of b
 
-
+-- start declaration of i
 Push 0
+-- end declaration of i
 
-
-
-Push 0
-
-
+-- start while block
 label 1
-Get 3
-Push 15
+Get 2
+Push 10
 LT
 JE 2
-
+Pop
+-- start declaration of c
 Get 1
-Print
-Push 10
-PrintC
-Pop
-Pop
+-- end declaration of c
 
-
-Get 1
-Set 2
-Pop
-
-
+-- start declaration of b
 Get 1
 Get 0
 Add
 Set 1
 Pop
+-- end declaration of b
 
-
-Get 2
+-- start declaration of a
+Get 3
 Set 0
 Pop
+-- end declaration of a
 
-
-Get 3
-Push 1
-Add
-Set 3
-Pop
-
-Jump 1
-label 2
-
-
-
+-- start print stmt
 Get 1
 Print
 Push 10
 PrintC
 Pop
 Pop
+-- end print stmt
 
+-- start declaration of i
+Get 2
+Push 1
+Add
+Set 2
+Pop
+-- end declaration of i
+
+Pop
+-- end scope
+Jump 1
+label 2
+-- end while block
+
+Pop
+-- end scope
+
+Pop
+Pop
+-- end scope

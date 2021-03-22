@@ -9,7 +9,7 @@ pub struct Scope {
 
 #[derive(Default, Debug, Clone)]
 pub struct CompileScope {
-    pub vars: BTreeMap<String, usize>,
+    pub vars: Vec<BTreeMap<String, usize>>,
     pub label_count: usize,
 }
 
@@ -49,18 +49,21 @@ impl Stmt {
     pub fn compile(&self, scope: &mut CompileScope) {
         use Stmt::*;
 
-        println!();
         match self {
             ExprStmt(s) => {
+                println!("-- start expr stmt");
                 s.compile(scope);
+                println!("-- end expr stmt");
             }
             PrintStmt(s) => {
+                println!("-- start print stmt");
                 s.compile(scope);
                 println!("Print");
                 println!("Push 10");
                 println!("PrintC");
                 println!("Pop");
                 println!("Pop");
+                println!("-- end print stmt");
             }
             Dec(Declaration {
                 lhs,
@@ -68,34 +71,47 @@ impl Stmt {
                 alias,
                 plus_or_minus,
             }) => {
-                if scope.vars.keys().any(|k| k == lhs) {
-                    if !alias && plus_or_minus.is_some() {
-                        let i = *scope.vars.get(lhs).unwrap();
-                        println!("Get {}", i);
-                        rhs.compile(scope);
-                        if plus_or_minus.unwrap() {
-                            println!("Add");
-                        } else {
-                            println!("Sub");
-                        }
-                        println!("Set {}", i);
-                        println!("Pop");
-                    } else {
-                        let i = *scope.vars.get(lhs).unwrap();
-                        rhs.compile(scope);
-                        println!("Set {}", i);
-                        println!("Pop");
-                    }
-                } else {
-                    scope.vars.insert(lhs.to_string(), scope.vars.len());
+                println!("-- start declaration of {}", lhs);
+                if *alias {
+                    let top_scope = scope.vars.last_mut().unwrap();
+                    let len = top_scope.len();
+                    top_scope.insert(lhs.to_string(), len);
                     rhs.compile(scope);
+                } else {
+                    let mut full_len: usize = scope.vars.iter().map(|s| s.len()).sum();
+                    for s in scope.vars.iter_mut().rev() {
+                        if s.contains_key(lhs) {
+                            let i = full_len - s.len() + *s.get(lhs).unwrap();
+
+                            if plus_or_minus.is_some() {
+                                println!("Get {}", i);
+                                rhs.compile(scope);
+                                if plus_or_minus.unwrap() {
+                                    println!("Add");
+                                } else {
+                                    println!("Sub");
+                                }
+                                println!("Set {}", i);
+                                println!("Pop");
+                            } else {
+                                rhs.compile(scope);
+                                println!("Set {}", i);
+                                println!("Pop");
+                            }
+
+                            break;
+                        }
+                        full_len -= s.len();
+                    }
                 }
+                println!("-- end declaration of {}", lhs);
             }
             IfStmt(If {
                 cond,
                 then_block,
                 else_block,
             }) => {
+                println!("-- start if block");
                 cond.compile(scope);
                 println!("JE {}", scope.label_count);
                 println!("Pop");
@@ -105,71 +121,25 @@ impl Stmt {
                 else_block.compile(scope);
                 println!("label {}", scope.label_count + 1);
                 scope.label_count += 2;
+                println!("-- end if block");
             }
             WhileStmt(While { cond, loop_block }) => {
+                println!("-- start while block");
                 println!("label {}", scope.label_count + 1);
                 cond.compile(scope);
                 println!("JE {}", scope.label_count + 2);
+                println!("Pop");
                 loop_block.compile(scope);
                 println!("Jump {}", scope.label_count + 1);
                 println!("label {}", scope.label_count + 2);
                 scope.label_count += 2;
+                println!("-- end while block");
             }
-            Block(crate::block::Block { statements }) => {
-                statements.iter().for_each(|s| s.compile(scope));
+            Block(b) => {
+                b.compile(scope);
             }
             Break => {}
         }
         println!();
     }
-}
-
-#[cfg(test)]
-mod stmt_tests {
-    use crate::run_file;
-    use crate::Atom;
-    use crate::State;
-
-    macro_rules! test_files {
-        () => {};
-        ( $fn_name:ident, $file:expr => $expected:expr; $($tail:tt)* ) => {
-            #[test]
-            fn $fn_name() {
-                let mut top_state = State::default();
-                let output = run_file(format!("test_files/{}", $file), &mut top_state).unwrap();
-                assert_eq!(output, $expected);
-            }
-
-            test_files!($($tail)*);
-        };
-        ( $fn_name:ident, $file:expr; $($tail:tt)* ) => {
-            #[test]
-            #[should_panic]
-            fn $fn_name() {
-                let mut top_state = State::default();
-                run_file(format!("test_files/{}", $file), &mut top_state).unwrap();
-            }
-
-            test_files!($($tail)*);
-        };
-    }
-
-    test_files!(
-        basic1, "basic1.slang" => Some(Atom::Int(20));
-        basic2, "basic2.slang" => Some(Atom::Int(5));
-        if1, "if.slang" => Some(Atom::Str("hello".to_string()));
-        if2, "else.slang" => Some(Atom::Str("goodbye".to_string()));
-        scope_modify, "scope_modify.slang" => Some(Atom::Int(2));
-        while1, "while1.slang" => Some(Atom::Int(10));
-        for1, "for1.slang" => Some(Atom::Int(1053));
-        fn1, "fn1.slang" => Some(Atom::Int(120));
-        euler01, "project_euler_01.slang" => Some(Atom::Int(233168));
-        euler02, "project_euler_02.slang" => Some(Atom::Int(4613732));
-        scoped_loop, "scoped_loop.slang" => Some(Atom::Int(45));
-        loop_break, "loop_break.slang" => Some(Atom::Int(5));
-        nested_loop_break, "nested_loop_break.slang" => Some(Atom::Int(25));
-        recur1, "recursion01.slang" => Some(Atom::Int(987));
-        error1, "error1.slang";
-        scope_typecheck, "scope_typecheck.slang";
-    );
 }

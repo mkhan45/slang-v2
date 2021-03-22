@@ -29,7 +29,7 @@ fn run(code: &str) -> Result<Option<Atom>, Box<dyn Error>> {
         let main_block = parse_block(&mut lexer);
 
         let mut scope = CompileScope {
-            vars: BTreeMap::new(),
+            vars: vec![BTreeMap::new()],
             label_count: 0,
         };
         main_block.compile(&mut scope);
