@@ -81,6 +81,12 @@ pub struct Scope {
     pub vars: BTreeMap<String, Atom>,
 }
 
+#[derive(Default, Debug, Clone)]
+pub struct CompileScope {
+    pub vars: BTreeMap<String, usize>,
+    pub label_count: usize,
+}
+
 #[derive(Debug, Clone)]
 pub struct Declaration {
     pub lhs: String,
@@ -159,6 +165,83 @@ impl Stmt {
             Stmt::Block(mut b) => b.execute(state),
             Stmt::Break => Some(Atom::Break),
         }
+    }
+
+    pub fn compile(&self, scope: &mut CompileScope) {
+        use Stmt::*;
+
+        println!();
+        match self {
+            ExprStmt(s) => {
+                s.compile(scope);
+            }
+            PrintStmt(s) => {
+                s.compile(scope);
+                println!("Print");
+                println!("Push 10");
+                println!("PrintC");
+                println!("Pop");
+                println!("Pop");
+            }
+            Dec(Declaration {
+                lhs,
+                rhs,
+                alias,
+                plus_or_minus,
+            }) => {
+                if scope.vars.keys().any(|k| k == lhs) {
+                    if !alias && plus_or_minus.is_some() {
+                        let i = *scope.vars.get(lhs).unwrap();
+                        println!("Get {}", i);
+                        rhs.compile(scope);
+                        if plus_or_minus.unwrap() {
+                            println!("Add");
+                        } else {
+                            println!("Sub");
+                        }
+                        println!("Set {}", i);
+                        println!("Pop");
+                    } else {
+                        let i = *scope.vars.get(lhs).unwrap();
+                        rhs.compile(scope);
+                        println!("Set {}", i);
+                        println!("Pop");
+                    }
+                } else {
+                    scope.vars.insert(lhs.to_string(), scope.vars.len());
+                    rhs.compile(scope);
+                }
+            }
+            IfStmt(If {
+                cond,
+                then_block,
+                else_block,
+            }) => {
+                cond.compile(scope);
+                println!("JE {}", scope.label_count);
+                println!("Pop");
+                then_block.compile(scope);
+                println!("Jump {}", scope.label_count + 1);
+                println!("label {}", scope.label_count);
+                else_block.compile(scope);
+                println!("label {}", scope.label_count + 1);
+                scope.label_count += 2;
+            }
+            WhileStmt(While { cond, loop_block }) => {
+                println!("label {}", scope.label_count + 1);
+                cond.compile(scope);
+                println!("JE {}", scope.label_count + 2);
+                loop_block.compile(scope);
+                println!("Jump {}", scope.label_count + 1);
+                println!("label {}", scope.label_count + 2);
+                scope.label_count += 2;
+            }
+            Block(crate::block::Block { statements }) => {
+                statements.iter().for_each(|s| s.compile(scope));
+            }
+            Break => {}
+        }
+        println!();
     }
 }
 

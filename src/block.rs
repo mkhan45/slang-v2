@@ -29,4 +29,8 @@ impl Block {
         state.scopes.pop();
         res
     }
+
+    pub fn compile(&self, scope: &mut CompileScope) {
+        self.statements.iter().for_each(|s| s.compile(scope));
+    }
 }

@@ -3,10 +3,11 @@
 #![feature(bindings_after_at)]
 
 use crate::eval::atom::Atom;
-use std::error::Error;
+use crate::statement::CompileScope;
 use std::io;
 use std::io::BufRead;
 use std::io::Write;
+use std::{collections::BTreeMap, error::Error};
 
 mod scanner;
 use scanner::token::*;
@@ -39,13 +40,20 @@ fn run(code: &str, state: &mut State, unscoped: bool) -> Result<Option<Atom>, Bo
 
         let mut main_block = parse_block(&mut lexer);
 
-        let res = if unscoped {
-            main_block.execute_unscoped(state)
-        } else {
-            main_block.execute_unscoped(state)
+        let mut scope = CompileScope {
+            vars: BTreeMap::new(),
+            label_count: 0,
         };
+        main_block.compile(&mut scope);
 
-        Ok(res)
+        // let res = if unscoped {
+        //     main_block.execute_unscoped(state)
+        // } else {
+        //     main_block.execute_unscoped(state)
+        // };
+
+        // Ok(res)
+        Ok(None)
     }
 }
 

@@ -1,4 +1,4 @@
-use crate::block::Block;
+use crate::{block::Block, statement::CompileScope};
 use std::fmt;
 use std::ops::{Add, Div, Mul, Sub};
 
@@ -101,7 +101,7 @@ impl Div for Atom {
                 } else {
                     Atom::Int(res as isize)
                 }
-            },
+            }
             _ => todo!(),
         }
     }
@@ -198,6 +198,19 @@ impl Atom {
         // match (self, rhs) {
         //     _ => panic!("Can't access field {} of {}", rhs, self),
         // }
+    }
+
+    pub fn compile(&self, scope: &CompileScope) {
+        use Atom::*;
+
+        match self {
+            Int(i) => println!("Push {}", i),
+            Identifier(n) => {
+                let i = scope.vars.get(n).unwrap();
+                println!("Get {}", i);
+            }
+            _ => todo!(),
+        }
     }
 }
 

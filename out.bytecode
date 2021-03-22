@@ -1,0 +1,19 @@
+
+Push 0
+
+
+label 1
+Get 0
+Push 10000000
+LT
+JE 2
+
+Get 0
+Push 1
+Add
+Set 0
+Pop
+
+Jump 1
+label 2
+

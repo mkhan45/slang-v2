@@ -1,4 +1,5 @@
 use crate::eval::atom::FunctionCall;
+use crate::statement::CompileScope;
 use crate::statement::Declaration;
 use std::fmt;
 
@@ -80,6 +81,67 @@ impl fmt::Display for S {
                     write!(f, " {}", s)?
                 }
                 write!(f, ")")
+            }
+        }
+    }
+}
+
+impl S {
+    pub fn compile(&self, compile_scope: &mut CompileScope) {
+        use S::*;
+
+        let mut c = |s: &S| s.compile(compile_scope);
+
+        match self {
+            Atom(a) => a.compile(&compile_scope),
+            Cons(op, xs) => {
+                let slice = xs.as_slice();
+                match (op, slice) {
+                    (Op::Plus, [a, b, ..]) => {
+                        c(a);
+                        c(b);
+                        println!("Add");
+                    }
+                    (Op::Minus, [a, b, ..]) => {
+                        c(a);
+                        c(b);
+                        println!("Sub");
+                    }
+                    (Op::Multiply, [a, b, ..]) => {
+                        c(a);
+                        c(b);
+                        println!("Mul");
+                    }
+                    (Op::Divide, [a, b, ..]) => {
+                        c(a);
+                        c(b);
+                        println!("Div");
+                    }
+                    (Op::Equal, [a, b, ..]) => {
+                        c(a);
+                        c(b);
+                        println!("EQ");
+                    }
+                    (Op::NotEqual, [a, b, ..]) => {
+                        c(a);
+                        c(b);
+                        println!("NE");
+                    }
+                    (Op::Less, [a, b, ..]) => {
+                        c(a);
+                        c(b);
+                        println!("LT");
+                    }
+                    (Op::Greater, [a, b, ..]) => {
+                        c(a);
+                        c(b);
+                        println!("GT");
+                    }
+                    _ => {
+                        dbg!(op);
+                        todo!();
+                    }
+                }
             }
         }
     }
