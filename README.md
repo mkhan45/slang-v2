@@ -6,6 +6,8 @@ Since this is a treewalk interpreter and I'm planning on writing a bytecode inte
 
 In the REPL, add '~' at the end of the input. This is the easiest way I could think of to make it work with multiline.
 
+There's also a proof of concept bytecode compiler on the `bytecode` branch which compiles instructions for [TinyVM](https://github.com/mkhan45/tinyvm/tree/less_simple). It supports only integers, if statements, and loops, but is many times faster than the treewalk version. I plan to design and write a more complete bytecode interpreter sometime soon.
+
 ## Examples
 
 #### Project Euler 01
