@@ -6,44 +6,102 @@ use atom::Atom;
 
 mod function;
 
-pub fn eval_expr(expr: &S, state: &mut State) -> Atom {
-    let mut eval = |expr: &S| eval_expr(expr, state);
+type K<'a> = Box<dyn Fn(&'a mut State) -> Atom>;
+
+pub fn eval_expr<'a>(expr: &'static S, state: &'static mut State) -> K<'a> {
     match expr {
         S::Atom(a) => match a {
-            Atom::Identifier(name) => {
-                match state.get_variable(name) {
-                    Some(a) => a.clone(),
-                    None => panic!("Variable {} undefined in state {:?}", name, state),
-                }
-            }
-            Atom::FnCall(f) => function::eval_function_call(f, state).unwrap(),
+            Atom::Identifier(name) => match state.get_variable(name) {
+                Some(a) => Box::new(|_| a.clone()),
+                None => panic!("Variable {} undefined in state {:?}", name, state),
+            },
+            Atom::FnCall(f) => Box::new(|_| function::eval_function_call(f, state).unwrap()),
             Atom::Array(arr) => {
-                let new_arr = arr.iter().map(|s| S::Atom(eval(s))).collect();
-                Atom::Array(new_arr).clone()
+                let new_arr = arr
+                    .iter()
+                    .map(|s| S::Atom(eval_expr(s, state)(state)))
+                    .collect();
+                Box::new(move |_| Atom::Array(new_arr).clone())
             }
-            _ => a.clone(),
+            _ => Box::new(|_| a.clone()),
         },
         S::Cons(op, xs) => {
             let slice = xs.as_slice();
             match (op, slice) {
-                (Op::Plus, [a, b, ..]) => eval(&a) + eval(&b),
-                (Op::Minus, [a, b, ..]) => eval(&a) - eval(&b),
-                (Op::Minus, [a]) => eval(&a).negate(),
-                (Op::Multiply, [a, b, ..]) => eval(&a) * eval(&b),
-                (Op::Divide, [a, b, ..]) => eval(&a) / eval(&b),
-                (Op::Negate, [a]) => eval(&a).negate(),
-                (Op::Equal, [a, b]) => Atom::Bool(eval(&a) == (eval(&b))),
-                (Op::NotEqual, [a, b]) => Atom::Bool(eval(&a) != (eval(&b))),
-                (Op::Less, [a, b]) => Atom::Bool(eval(&a) < (eval(&b))),
-                (Op::Greater, [a, b]) => Atom::Bool(eval(&a) > (eval(&b))),
-                (Op::Mod, [a, b]) => eval(&a).modulus(&eval(&b)),
-                (Op::And, [a, b]) => eval(&a).and(&eval(&b)),
-                (Op::Or, [a, b]) => eval(&a).or(&eval(&b)),
+                (Op::Plus, [a, b, ..]) => {
+                    let a = eval_expr(a, state);
+                    let b = eval_expr(b, state);
+                    Box::new(move |_| a(state) + b(state))
+                }
+                (Op::Minus, [a, b, ..]) => {
+                    let a = eval_expr(a, state);
+                    let b = eval_expr(b, state);
+                    Box::new(|_| a(state) - b(state))
+                }
+                (Op::Minus, [a]) => {
+                    let a = eval_expr(a, state);
+                    Box::new(|_| a(state).negate())
+                }
+                (Op::Multiply, [a, b, ..]) => {
+                    let a = eval_expr(a, state);
+                    let b = eval_expr(b, state);
+                    Box::new(|_| a(state) * b(state))
+                }
+                (Op::Divide, [a, b, ..]) => {
+                    let a = eval_expr(a, state);
+                    let b = eval_expr(b, state);
+                    Box::new(|_| a(state) / b(state))
+                }
+                (Op::Negate, [a]) => {
+                    let a = eval_expr(a, state);
+                    Box::new(|_| a(state).negate())
+                }
+                (Op::Equal, [a, b]) => {
+                    let a = eval_expr(a, state);
+                    let b = eval_expr(b, state);
+                    Box::new(|_| Atom::Bool(a(state) == (b(state))))
+                }
+                (Op::NotEqual, [a, b]) => {
+                    let a = eval_expr(a, state);
+                    let b = eval_expr(b, state);
+                    Box::new(|_| Atom::Bool(a(state) != (b(state))))
+                }
+                (Op::Less, [a, b]) => {
+                    let a = eval_expr(a, state);
+                    let b = eval_expr(b, state);
+                    Box::new(|_| Atom::Bool(a(state) < (b(state))))
+                }
+                (Op::Greater, [a, b]) => {
+                    let a = eval_expr(a, state);
+                    let b = eval_expr(b, state);
+                    Box::new(|_| Atom::Bool(a(state) > (b(state))))
+                }
+                (Op::Mod, [a, b]) => {
+                    let a = eval_expr(a, state);
+                    let b = eval_expr(b, state);
+                    Box::new(|_| a(state).modulus(&b(state)))
+                }
+                (Op::And, [a, b]) => {
+                    let a = eval_expr(a, state);
+                    let b = eval_expr(b, state);
+                    Box::new(|_| a(state).and(&b(state)))
+                }
+                (Op::Or, [a, b]) => {
+                    let a = eval_expr(a, state);
+                    let b = eval_expr(b, state);
+                    Box::new(|_| a(state).or(&b(state)))
+                }
                 (Op::Indexing, [a, b]) => {
-                    let a = eval(&a).index(&eval(&b));
-                    eval(&S::Atom(a))
-                },
-                (Op::Access, [a, b]) => eval(&a).access(&b),
+                    let a = eval_expr(a, state);
+                    let b = eval_expr(b, state);
+                    Box::new(|_| a(state).index(&b(state)))
+                }
+                (Op::Access, [a, b]) => {
+                    let a = eval_expr(a, state);
+                    let b = eval_expr(b, state);
+                    // Box::new(|_| a(state).access(&b(state)))
+                    todo!()
+                }
                 _ => panic!("invalid expr: {}", expr),
             }
         }
